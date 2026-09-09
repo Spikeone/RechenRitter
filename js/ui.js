@@ -136,6 +136,9 @@ export function createUi(callbacks) {
   }
 
   function renderEnemies(state, animateEntry) {
+    // Two enemies share the row with the player, so the arena drops to the
+    // smaller sprite size to keep everyone clear of each other.
+    els.arena.classList.toggle('pair', state.enemies.length > 1);
     els.enemySlots.innerHTML = '';
     enemyNodes = state.enemies.map((enemy) => {
       const root = document.createElement('div');

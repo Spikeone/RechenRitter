@@ -14,8 +14,10 @@
   --purple: #a77bff;
   --font-pixel: "Press Start 2P", ui-monospace, "SF Mono", Consolas, monospace;
   --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --sprite-scale: 2.6;
-  --outline: 2px;
+  --sprite-scale: 3.4;
+  --sprite-solo: 3.4;
+  --sprite-pair: 2.8;
+  --outline: 3px;
   --outline-color: #100d1c;
   --key-h: clamp(46px, 8.5vh, 62px);
 }
@@ -145,6 +147,7 @@ button {
 
 /* ---------------- arena ---------------- */
 #arena {
+  --sprite-scale: var(--sprite-solo);
   position: relative;
   flex: 1 1 auto;
   min-height: 120px;
@@ -166,6 +169,8 @@ button {
 }
 .bg-layer.active { opacity: 1; }
 
+#arena.pair { --sprite-scale: var(--sprite-pair); }
+
 #ground {
   position: absolute;
   left: 0;
@@ -178,17 +183,17 @@ button {
 
 #player-slot {
   position: absolute;
-  left: 4%;
+  left: 8px;
   bottom: 10%;
 }
 
 #enemy-slots {
   position: absolute;
-  right: 4%;
+  right: 8px;
   bottom: 10%;
   display: flex;
   align-items: flex-end;
-  gap: clamp(4px, 2vw, 16px);
+  gap: clamp(2px, 1.5vw, 12px);
 }
 
 .enemy {
@@ -203,12 +208,12 @@ button {
 
 .hp-bar {
   position: relative;
-  width: max(64px, calc(32px * var(--sprite-scale) * 0.95));
-  max-width: 104px;
-  height: 15px;
-  border-radius: 4px;
+  width: max(76px, calc(32px * var(--sprite-scale) * 0.95));
+  max-width: 132px;
+  height: 20px;
+  border-radius: 5px;
   background: rgba(10, 8, 20, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 2px solid rgba(255, 255, 255, 0.35);
   overflow: hidden;
 }
 
@@ -220,7 +225,7 @@ button {
   align-items: center;
   justify-content: center;
   font-family: var(--font-pixel);
-  font-size: 7px;
+  font-size: 10px;
   line-height: 1;
   color: #fff;
   text-shadow: 0 1px 2px #000, 0 0 3px #000;
@@ -235,12 +240,13 @@ button {
 }
 
 .enemy-name {
-  font-size: 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 600;
   color: #fff;
   text-shadow: 0 1px 2px #000, 0 0 4px #000;
   letter-spacing: 0.02em;
   white-space: nowrap;
-  max-width: 110px;
+  max-width: 140px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -509,6 +515,7 @@ h3 {
 .credits { line-height: 1.6; margin-top: 8px; }
 
 #start-hero { min-height: 104px; display: flex; align-items: flex-end; justify-content: center; }
+#start-hero .sprite { --sprite-scale: 3; }
 
 .big-btn {
   width: 100%;
@@ -702,11 +709,24 @@ h3 {
 
 /* ---------------- small screens ---------------- */
 @media (max-height: 680px) {
-  :root { --sprite-scale: 2.1; --outline: 2px; --key-h: 42px; }
+  :root { --sprite-solo: 2.7; --sprite-pair: 2.3; --outline: 2px; --key-h: 42px; }
   #arena { min-height: 100px; }
   #question-area { min-height: 92px; }
+  .hp-bar { height: 17px; }
+  .hp-text { font-size: 9px; }
 }
 
 @media (min-height: 860px) {
-  :root { --sprite-scale: 3.2; --outline: 3px; }
+  :root { --sprite-solo: 4.2; --sprite-pair: 3.4; --outline: 4px; }
+  .hp-bar { height: 22px; }
+  .hp-text { font-size: 11px; }
+}
+
+/* Two enemies plus their bars have to fit side by side on a narrow phone, so
+   this comes last and overrides the height-based sizes above. */
+@media (max-width: 360px) {
+  :root { --sprite-solo: 2.8; --sprite-pair: 2.2; --outline: 2px; }
+  .hp-bar { max-width: 108px; height: 17px; }
+  .hp-text { font-size: 9px; }
+  .enemy-name { font-size: 0.62rem; max-width: 112px; }
 }

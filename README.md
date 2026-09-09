@@ -152,28 +152,22 @@ game still runs — sprites fall back to coloured blocks.
 
 ## Deploying to GitHub Pages
 
-The repository root is the site root, so no workflow or build is needed.
+Live at <https://spikeone.github.io/RechenRitter/>, served from
+<https://github.com/Spikeone/RechenRitter>. The repository root is the site root,
+so there is no workflow and no build step. Every path in the page is relative, so
+the project subpath works.
+
+Enable it once, under **Settings › Pages › Build and deployment**: source
+*Deploy from a branch*, branch `main`, folder `/ (root)`. The first build takes
+about a minute.
+
+After that, publishing is just:
 
 ```bash
-git init && git add -A && git commit -m "Rechenritter"
+git push
 ```
 
-```bash
-gh repo create rechenritter --public --source=. --push
-```
-
-Without the `gh` CLI, create the repository on github.com and then:
-
-```bash
-git remote add origin https://github.com/<user>/rechenritter.git && git branch -M main && git push -u origin main
-```
-
-Then in the repository: **Settings › Pages › Build and deployment › Deploy from a
-branch**, branch `main`, folder `/ (root)`. The game appears at
-`https://<user>.github.io/rechenritter/` after a minute. All paths are relative,
-so the project subpath works.
-
-On the phone, open that URL and use *Add to home screen* — it installs as a
+On the phone, open the URL and use *Add to home screen*. It installs as a
 full-screen app and works offline.
 
 ### Release ritual

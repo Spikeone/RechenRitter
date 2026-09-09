@@ -60,6 +60,7 @@ const DEFAULT_SETTINGS = {
   music: 0.35,
   skin: DEFAULT_SKIN,
   showTimerBar: true,
+  missingFactor: true,
 };
 
 export function loadSettings() {

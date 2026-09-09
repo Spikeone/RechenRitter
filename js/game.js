@@ -37,6 +37,9 @@ export function createGame(options) {
   const rng = opts.rng || Math.random;
   const picker = opts.picker;
   const enemyKindsFor = opts.enemyKindsFor || defaultEnemyKinds;
+  // A setting, not run state: with it off only the result is ever missing, so
+  // the player never has to divide to get there.
+  let allowMissingFactor = opts.allowMissingFactor !== false;
 
   const state = {
     phase: 'idle',       // idle | running | hold | solution | paused | over
@@ -92,7 +95,7 @@ export function createGame(options) {
       };
     }
 
-    const missing = state.level >= XY_MISSING_FROM_LEVEL
+    const missing = (allowMissingFactor && state.level >= XY_MISSING_FROM_LEVEL)
       ? pickFrom(rng, MISSING_POOL_LATE)
       : 'z';
     const answer = missing === 'z' ? z : (missing === 'x' ? x : y);
@@ -513,9 +516,15 @@ export function createGame(options) {
     return events;
   }
 
+  // Takes effect on the next question dealt, so a running wave is never rewritten.
+  function setAllowMissingFactor(value) {
+    allowMissingFactor = value !== false;
+  }
+
   return {
     state,
     start,
+    setAllowMissingFactor,
     typeDigit,
     backspace,
     submit,

@@ -143,6 +143,8 @@ export const LABELS = {
   music: 'Musik',
   muted: 'Stumm',
   showTimerBar: 'Zeitbalken anzeigen',
+  missingFactor: 'Fehlender Faktor',
+  missingFactorHint: 'Aufgaben wie 3 · ? = 30 ab Level 10. Aus = es fehlt immer das Ergebnis.',
   character: 'Figur',
   characterLocked: 'Noch gesperrt',
   resetRun: 'Spielstand löschen',

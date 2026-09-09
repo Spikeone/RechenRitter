@@ -19,7 +19,10 @@ let settings = storage.loadSettings();
 let stats = storage.loadStats();
 let unlocked = storage.loadAchievements();
 let picker = createPicker({ stats });
-let game = createGame({ rng: Math.random, picker, skin: settings.skin });
+let game = createGame({
+  rng: Math.random, picker, skin: settings.skin,
+  allowMissingFactor: settings.missingFactor !== false,
+});
 let ui = null;
 
 let lastFrame = 0;
@@ -98,6 +101,7 @@ function onEnemyHit(ev) {
   ui.renderHp(game.state);
   if (ev.damage > 0) {
     audio.playSfx('hit');
+    fx.slash(target, ev.damage >= 3);
     fx.hitSprite(target);
     fx.burst(target, ev.damage >= 3 ? '#ffd45e' : '#ff8f6b', ev.damage >= 3 ? 16 : 10);
     fx.shake(ev.damage);
@@ -271,7 +275,10 @@ function newGame() {
   startAudio();
   fx.clearToasts();
   picker = createPicker({ stats });
-  game = createGame({ rng: Math.random, picker, skin: settings.skin });
+  game = createGame({
+    rng: Math.random, picker, skin: settings.skin,
+    allowMissingFactor: settings.missingFactor !== false,
+  });
   ui.hideOverlays();
   lastFrame = now();
   dispatch(game.start());
@@ -284,7 +291,10 @@ function continueGame() {
   fx.clearToasts();
   picker = createPicker({ stats });
   picker.load(snap.picker);
-  game = createGame({ rng: Math.random, picker, skin: snap.skin || settings.skin });
+  game = createGame({
+    rng: Math.random, picker, skin: snap.skin || settings.skin,
+    allowMissingFactor: settings.missingFactor !== false,
+  });
   ui.hideOverlays();
   lastFrame = now();
   dispatch(game.loadState(snap));
@@ -411,6 +421,8 @@ const callbacks = {
       if (key === 'sfx') audio.playSfx('key');
     }
     if (key === 'showTimerBar') ui.renderTimer(game.state, settings);
+    // Applies from the next question on, so the current one is not rewritten.
+    if (key === 'missingFactor') game.setAllowMissingFactor(value);
   },
   onSkinSelect(id) {
     settings.skin = id;
@@ -424,7 +436,10 @@ const callbacks = {
   onResetRun(button) {
     armButton(button, LABELS.resetRun, () => {
       storage.clearRun();
-      game = createGame({ rng: Math.random, picker, skin: settings.skin });
+      game = createGame({
+        rng: Math.random, picker, skin: settings.skin,
+        allowMissingFactor: settings.missingFactor !== false,
+      });
       ui.renderStartScreen(null, stats, settings.skin);
       ui.showOverlay('overlay-start');
     });

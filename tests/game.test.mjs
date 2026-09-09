@@ -152,6 +152,37 @@ test('the answer matches the missing operand and its digit count', () => {
   }
 });
 
+test('with the missing-factor option off only the result is ever missing', () => {
+  for (let i = 0; i < 200; i++) {
+    const game = createGame({ rng: Math.random, allowMissingFactor: false });
+    game.setLevel(12 + (i % 30));
+    for (const q of game.state.questions) {
+      if (q.kind === 'fill') assert.strictEqual(q.missing, 'z', 'no factor is hidden');
+    }
+  }
+});
+
+test('the missing-factor option can be switched during a run', () => {
+  const game = createGame({ rng: Math.random, allowMissingFactor: false });
+  game.setLevel(20);
+  assert.strictEqual(game.state.questions[0].kind === 'fill'
+    ? game.state.questions[0].missing : 'z', 'z');
+  game.setAllowMissingFactor(true);
+  const seen = new Set();
+  for (let i = 0; i < 300; i++) {
+    game.setLevel(20);
+    const q = game.state.questions[0];
+    if (q.kind === 'fill') seen.add(q.missing);
+  }
+  assert.ok(seen.has('x') || seen.has('y'), 'factors are hidden again once it is on');
+  game.setAllowMissingFactor(false);
+  for (let i = 0; i < 200; i++) {
+    game.setLevel(20);
+    const q = game.state.questions[0];
+    if (q.kind === 'fill') assert.strictEqual(q.missing, 'z', 'and hidden no more once it is off');
+  }
+});
+
 test('true/false cards appear from level 5 and their shown value is consistent', () => {
   let tfSeen = 0;
   for (let i = 0; i < 400; i++) {

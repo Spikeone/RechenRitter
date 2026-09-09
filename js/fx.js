@@ -97,7 +97,17 @@ export function shake(strength) {
 }
 
 export const hitSprite = (el) => playAnim(el, 'hit', 500);
-export const attackSprite = (el) => playAnim(el, 'attack', 450);
+export const attackSprite = (el) => playAnim(el, 'attack', 700);
+
+export function slash(targetEl, heavy) {
+  if (reduceMotion()) return;
+  const pos = anchorOf(targetEl);
+  const node = document.createElement('div');
+  node.className = 'slash' + (heavy ? ' heavy' : '');
+  node.style.left = pos.x + '%';
+  node.style.top = pos.y + '%';
+  spawn(node, 600);
+}
 
 export function dieSprite(enemyEl) {
   if (!enemyEl) return Promise.resolve();

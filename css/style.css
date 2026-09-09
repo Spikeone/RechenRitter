@@ -15,6 +15,8 @@
   --font-pixel: "Press Start 2P", ui-monospace, "SF Mono", Consolas, monospace;
   --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --sprite-scale: 2.6;
+  --outline: 2px;
+  --outline-color: #100d1c;
   --key-h: clamp(46px, 8.5vh, 62px);
 }
 
@@ -200,13 +202,29 @@ button {
 .enemy.target .sprite { filter: drop-shadow(0 0 6px var(--gold)); }
 
 .hp-bar {
-  width: calc(32px * var(--sprite-scale) * 0.9);
-  max-width: 92px;
-  height: 8px;
+  position: relative;
+  width: max(64px, calc(32px * var(--sprite-scale) * 0.95));
+  max-width: 104px;
+  height: 15px;
   border-radius: 4px;
-  background: rgba(10, 8, 20, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: rgba(10, 8, 20, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.3);
   overflow: hidden;
+}
+
+/* The remaining hit points, centred over the bar and legible on either colour. */
+.hp-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-pixel);
+  font-size: 7px;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 1px 2px #000, 0 0 3px #000;
+  letter-spacing: 0.04em;
 }
 
 .hp-fill {
@@ -238,7 +256,15 @@ button {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
   background-repeat: no-repeat;
-  filter: drop-shadow(0 3px 4px rgba(0, 0, 0, 0.6));
+  /* Four offset shadows draw a hard outline around the tile's opaque pixels,
+     which keeps the figures readable on the busy biome backgrounds. The last
+     shadow is the soft drop shadow onto the ground. */
+  filter:
+    drop-shadow(var(--outline) 0 0 var(--outline-color))
+    drop-shadow(calc(var(--outline) * -1) 0 0 var(--outline-color))
+    drop-shadow(0 var(--outline) 0 var(--outline-color))
+    drop-shadow(0 calc(var(--outline) * -1) 0 var(--outline-color))
+    drop-shadow(0 4px 5px rgba(0, 0, 0, 0.65));
 }
 .sprite.flip { transform: scaleX(-1); }
 
@@ -616,6 +642,18 @@ h3 {
   border-bottom: 1px solid var(--line);
 }
 .setting-row input[type="range"] { flex: 1; max-width: 55%; accent-color: var(--gold); }
+
+/* A row whose label carries an explanatory line under it. */
+.setting-row.wrap { align-items: flex-start; }
+.setting-row.wrap > span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+.setting-row small { font-size: 0.66rem; color: var(--ink-dim); line-height: 1.45; }
 .setting-row input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--gold); }
 
 #skin-picker {
@@ -635,7 +673,7 @@ h3 {
   gap: 2px;
   overflow: hidden;
 }
-.skin-option .sprite { --sprite-scale: 1.6; margin: 6px 0; }
+.skin-option .sprite { --sprite-scale: 1.6; --outline: 1px; margin: 6px 0; }
 .skin-option .skin-name { font-size: 0.58rem; color: var(--ink-dim); }
 .skin-option.selected { border-color: var(--gold); background: #3a3357; }
 .skin-option.locked { opacity: 0.4; }
@@ -664,11 +702,11 @@ h3 {
 
 /* ---------------- small screens ---------------- */
 @media (max-height: 680px) {
-  :root { --sprite-scale: 2.1; --key-h: 42px; }
+  :root { --sprite-scale: 2.1; --outline: 2px; --key-h: 42px; }
   #arena { min-height: 100px; }
   #question-area { min-height: 92px; }
 }
 
 @media (min-height: 860px) {
-  :root { --sprite-scale: 3.2; }
+  :root { --sprite-scale: 3.2; --outline: 3px; }
 }

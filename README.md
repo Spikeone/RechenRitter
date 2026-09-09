@@ -11,7 +11,8 @@ dependencies, no framework. It is a static site, so GitHub Pages serves it as is
 
 - **Format** — always `x · y = z` with exactly one number missing. Up to level 9
   only the result is missing; from level 10 the first or second factor can be
-  missing too. From level 5, some cards are **Richtig oder Falsch**: a complete
+  missing too, which can be switched off in the settings (`3 · ? = 30` is really
+  a division). From level 5, some cards are **Richtig oder Falsch**: a complete
   statement to accept or reject with one tap.
 - **Answering** — an on-screen numpad. The answer submits itself once it is
   complete; the field never shows how many digits the result has. `OK` commits a
@@ -25,6 +26,7 @@ dependencies, no framework. It is a static site, so GitHub Pages serves it as is
 - **Timer** — 30 s per wave at level 1, shrinking by 0.8 s per level down to a hard
   floor of 10 s (reached at level 26). It freezes while the solution card is up.
 - **Levels** — beating an enemy raises the level and the next enemy has more health.
+  Each enemy's bar shows its remaining hit points as a number.
   Every 10th level is a single tougher **boss**. From level 15 two enemies appear at
   once: both formulas are visible, the first is preselected, and answering it moves
   the focus to the second. One shared countdown covers the pair.
@@ -57,8 +59,9 @@ dependencies, no framework. It is a static site, so GitHub Pages serves it as is
   red = needs practice, tap a cell for its details) and a 30-day play-time strip.
   Useful for a parent checking how much it actually gets used.
 - **Erfolge** — 32 achievements. Nine of them unlock a new character.
-- **Einstellungen** — sound and music volume, mute, timer bar on/off, character
-  selection, and two-tap resets for the saved run and the statistics.
+- **Einstellungen** — sound and music volume, mute, timer bar on/off, missing
+  factor on/off, character selection, and two-tap resets for the saved run and
+  the statistics.
 
 ## Development
 

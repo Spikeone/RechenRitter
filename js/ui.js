@@ -153,21 +153,27 @@ export function createUi(callbacks) {
       const fill = document.createElement('div');
       fill.className = 'hp-fill';
       fill.style.transform = 'scaleX(' + (enemy.hp / enemy.maxHp) + ')';
+      const value = document.createElement('div');
+      value.className = 'hp-text';
+      value.textContent = enemy.hp + ' / ' + enemy.maxHp;
       bar.appendChild(fill);
+      bar.appendChild(value);
 
       root.appendChild(name);
       root.appendChild(sprite);
       root.appendChild(bar);
       els.enemySlots.appendChild(root);
       if (animateEntry) setTimeout(() => root.classList.remove('entering'), 560);
-      return { root, sprite, fill };
+      return { root, sprite, fill, value };
     });
   }
 
   function renderHp(state) {
     state.enemies.forEach((enemy, i) => {
       const node = enemyNodes[i];
-      if (node) node.fill.style.transform = 'scaleX(' + Math.max(0, enemy.hp / enemy.maxHp) + ')';
+      if (!node) return;
+      node.fill.style.transform = 'scaleX(' + Math.max(0, enemy.hp / enemy.maxHp) + ')';
+      node.value.textContent = enemy.hp + ' / ' + enemy.maxHp;
     });
   }
 
@@ -521,6 +527,7 @@ export function createUi(callbacks) {
     $('set-sfx').value = settings.sfx;
     $('set-music').value = settings.music;
     $('set-timerbar').checked = settings.showTimerBar !== false;
+    $('set-missingfactor').checked = settings.missingFactor !== false;
 
     const picker = $('skin-picker');
     picker.innerHTML = '';
@@ -588,6 +595,7 @@ export function createUi(callbacks) {
   $('set-sfx').addEventListener('input', (ev) => cb.onSetting('sfx', Number(ev.target.value)));
   $('set-music').addEventListener('input', (ev) => cb.onSetting('music', Number(ev.target.value)));
   $('set-timerbar').addEventListener('change', (ev) => cb.onSetting('showTimerBar', ev.target.checked));
+  $('set-missingfactor').addEventListener('change', (ev) => cb.onSetting('missingFactor', ev.target.checked));
   $('btn-reset-run').addEventListener('click', () => cb.onResetRun($('btn-reset-run')));
   $('btn-reset-stats').addEventListener('click', () => cb.onResetStats($('btn-reset-stats')));
 

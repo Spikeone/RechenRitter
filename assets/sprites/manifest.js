@@ -8,7 +8,7 @@
 export const TILE = 32;
 
 export const SHEETS = {
-  rogues: { file: 'assets/sprites/rogues.png', cols: 7, rows: 7, facesLeft: false },
+  rogues: { file: 'assets/sprites/rogues.png', cols: 7, rows: 7, facesLeft: true },
   monsters: { file: 'assets/sprites/monsters.png', cols: 12, rows: 13, facesLeft: false },
   animals: { file: 'assets/sprites/animals.png', cols: 9, rows: 16, facesLeft: true },
 };

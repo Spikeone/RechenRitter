@@ -13,9 +13,9 @@ dependencies, no framework. It is a static site, so GitHub Pages serves it as is
   only the result is missing; from level 10 the first or second factor can be
   missing too. From level 5, some cards are **Richtig oder Falsch**: a complete
   statement to accept or reject with one tap.
-- **Answering** — an on-screen numpad. The answer submits itself as soon as you
-  have typed as many digits as the result has (the empty slots show how many that
-  is). `OK` commits a shorter answer, `⌫` deletes.
+- **Answering** — an on-screen numpad. The answer submits itself once it is
+  complete; the field never shows how many digits the result has. `OK` commits a
+  shorter answer, `⌫` deletes.
 - **Speed is damage** — Exzellent 3, Perfekt 2, Gut 1. A correct but slow answer
   still counts as correct and costs no life, it simply deals no damage.
 - **Lives** — 5 per run. A wrong answer or a timeout costs one, and then the

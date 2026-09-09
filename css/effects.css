@@ -103,6 +103,14 @@
   35% { transform: translateX(14px) rotate(6deg); }
   100% { transform: translateX(0) rotate(0); }
 }
+/* A mirrored sprite needs its own keyframes: a plain translate would replace
+   the scaleX(-1) and un-mirror the figure mid-lunge. */
+.sprite.flip.anim-attack { animation-name: player-lunge-flip; }
+@keyframes player-lunge-flip {
+  0% { transform: scaleX(-1) translateX(0); }
+  35% { transform: scaleX(-1) translateX(-14px) rotate(-6deg); }
+  100% { transform: scaleX(-1) translateX(0) rotate(0); }
+}
 
 .sprite.anim-idle { animation: sprite-idle 2.4s ease-in-out infinite; }
 @keyframes sprite-idle {

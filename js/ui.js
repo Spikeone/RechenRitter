@@ -233,7 +233,9 @@ export function createUi(callbacks) {
     setInputLocked(false);
   }
 
-  // Draws the typed digits plus placeholders for what is still missing.
+  // Draws what has been typed so far. Deliberately shows a single placeholder
+  // rather than one per digit of the result — how long the answer is must not
+  // be given away.
   function renderTyped(state, popIndex) {
     state.questions.forEach((q, index) => {
       const card = cardNodes[index];
@@ -243,13 +245,14 @@ export function createUi(callbacks) {
       slot.innerHTML = '';
       slot.classList.toggle('filled', q.typed.length > 0);
       const shown = q.done ? String(q.answer) : q.typed;
-      for (let i = 0; i < q.digits; i++) {
+      const chars = shown.length > 0 ? shown.split('') : ['_'];
+      chars.forEach((ch, i) => {
         const span = document.createElement('span');
         span.className = 'digit';
-        span.textContent = shown[i] !== undefined ? shown[i] : '_';
+        span.textContent = ch;
         if (index === popIndex && i === q.typed.length - 1) span.classList.add('pop');
         slot.appendChild(span);
-      }
+      });
     });
   }
 

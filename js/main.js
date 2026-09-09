@@ -1,7 +1,7 @@
 // Bootstrap and driver: owns the clock, turns game events into rendering, sound
 // and effects, and keeps everything saved.
 
-import { INPUT_LOCK_MS, LOW_TIMER_FRAC, label, LABELS } from './config.js';
+import { INPUT_LOCK_MS, LOW_TIMER_FRAC, STATS_RESET_CODE, label, LABELS } from './config.js';
 import { createGame } from './game.js';
 import { createPicker } from './picker.js';
 import { createUi } from './ui.js';
@@ -451,14 +451,21 @@ const callbacks = {
       ui.showOverlay('overlay-start');
     });
   },
-  onResetStats(button) {
-    armButton(button, LABELS.resetStats, () => {
-      stats = storage.resetStats();
-      unlocked = {};
-      storage.saveAchievements(unlocked);
-      picker = createPicker({ stats });
-      ui.renderSettings(settings, unlockedSkins(unlocked, DEFAULT_SKIN));
-    });
+  // Wiping the statistics needs the code, so it cannot happen by accident.
+  onResetStats() {
+    ui.openStatsLock();
+  },
+  onStatsCode(entered) {
+    if (String(entered).trim() !== STATS_RESET_CODE) {
+      ui.statsLockError();
+      return;
+    }
+    stats = storage.resetStats();
+    unlocked = {};
+    storage.saveAchievements(unlocked);
+    picker = createPicker({ stats });
+    ui.renderSettings(settings, unlockedSkins(unlocked, DEFAULT_SKIN));
+    ui.statsLockDone();
   },
 };
 

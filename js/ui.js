@@ -54,6 +54,9 @@ export function createUi(callbacks) {
     numpad: $('numpad'),
     boolpad: $('boolpad'),
     factDetail: $('fact-detail'),
+    statsLock: $('stats-lock'),
+    statsCode: $('stats-code'),
+    statsLockMsg: $('stats-lock-msg'),
   };
 
   let playerSprite = null;
@@ -551,7 +554,42 @@ export function createUi(callbacks) {
   }
 
   // ---------------- settings ----------------
+  // ---------------- statistics child lock ----------------
+  function openStatsLock() {
+    els.statsLock.classList.remove('hidden');
+    els.statsLockMsg.className = 'hint small';
+    els.statsLockMsg.textContent = LABELS.statsCodePrompt;
+    els.statsCode.value = '';
+    els.statsCode.focus();
+  }
+
+  function closeStatsLock() {
+    els.statsLock.classList.add('hidden');
+    els.statsCode.value = '';
+  }
+
+  function statsLockError() {
+    els.statsLockMsg.className = 'hint small error';
+    els.statsLockMsg.textContent = LABELS.statsCodeWrong;
+    els.statsCode.value = '';
+    els.statsCode.focus();
+    els.statsLock.classList.remove('shake');
+    void els.statsLock.offsetWidth;
+    els.statsLock.classList.add('shake');
+  }
+
+  function statsLockDone() {
+    // renderSettings closes the panel on its way through, so make sure the
+    // confirmation is actually visible whichever order the caller uses.
+    els.statsLock.classList.remove('hidden');
+    els.statsCode.value = '';
+    els.statsLockMsg.className = 'hint small done';
+    els.statsLockMsg.textContent = LABELS.statsCleared;
+    setTimeout(closeStatsLock, 1800);
+  }
+
   function renderSettings(settings, unlockedSkinIds) {
+    closeStatsLock();
     $('set-muted').checked = !!settings.muted;
     $('set-sfx').value = settings.sfx;
     $('set-music').value = settings.music;
@@ -626,7 +664,13 @@ export function createUi(callbacks) {
   $('set-timerbar').addEventListener('change', (ev) => cb.onSetting('showTimerBar', ev.target.checked));
   $('set-missingfactor').addEventListener('change', (ev) => cb.onSetting('missingFactor', ev.target.checked));
   $('btn-reset-run').addEventListener('click', () => cb.onResetRun($('btn-reset-run')));
-  $('btn-reset-stats').addEventListener('click', () => cb.onResetStats($('btn-reset-stats')));
+  $('btn-reset-stats').addEventListener('click', () => cb.onResetStats());
+  $('btn-stats-confirm').addEventListener('click', () => cb.onStatsCode(els.statsCode.value));
+  $('btn-stats-cancel').addEventListener('click', () => closeStatsLock());
+  els.statsCode.addEventListener('keydown', (ev) => {
+    ev.stopPropagation();
+    if (ev.key === 'Enter') cb.onStatsCode(els.statsCode.value);
+  });
 
   document.addEventListener('keydown', (ev) => {
     if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
@@ -668,6 +712,10 @@ export function createUi(callbacks) {
     renderStats,
     renderAchievements,
     renderSettings,
+    openStatsLock,
+    closeStatsLock,
+    statsLockError,
+    statsLockDone,
     cardAt,
     enemyNode,
     heartAt,

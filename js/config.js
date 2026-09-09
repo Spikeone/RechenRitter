@@ -88,6 +88,11 @@ export function rate(level, thinkMs, kind, openQuestions) {
   return band || SLOW_RATING;
 }
 
+// Child lock for wiping the statistics. It only has to stop an impulsive tap,
+// so it lives in the source like any other setting — anyone reading the code
+// can see it.
+export const STATS_RESET_CODE = '13246587';
+
 // ----- German UI strings -----
 export const LABELS = {
   title: 'Rechenritter',
@@ -154,6 +159,12 @@ export const LABELS = {
   characterLocked: 'Noch gesperrt',
   resetRun: 'Spielstand löschen',
   resetStats: 'Statistik zurücksetzen',
+  statsCodePrompt: 'Zum Löschen bitte den Code eingeben.',
+  statsCodeLabel: 'Code',
+  statsCodeWrong: 'Falscher Code.',
+  statsCodeConfirm: 'Endgültig löschen',
+  statsCodeCancel: 'Abbrechen',
+  statsCleared: 'Statistik gelöscht.',
   confirmAgain: 'Wirklich? Nochmal tippen.',
   credits: 'Grafiken: 32rogues (Seth Boyles) · Rifts of the Nine Realms (Ronin Lab Studio)',
 };

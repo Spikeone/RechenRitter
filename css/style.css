@@ -683,6 +683,46 @@ h3 {
 .setting-row small { font-size: 0.66rem; color: var(--ink-dim); line-height: 1.45; }
 .setting-row input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--gold); }
 
+/* Child lock on wiping the statistics. */
+#stats-lock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.code-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+}
+
+.code-row input {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 2px solid var(--line);
+  background: var(--card);
+  color: var(--ink);
+  font-family: var(--font-pixel);
+  font-size: 0.9rem;
+  letter-spacing: 0.25em;
+  /* the page disables selection globally, which would block typing here */
+  -webkit-user-select: text;
+  user-select: text;
+}
+.code-row input:focus { outline: none; border-color: var(--gold); }
+
+#stats-lock .menu-row .big-btn { font-size: 0.62rem; padding: 11px 6px; }
+#stats-lock-msg.error { color: var(--red); }
+#stats-lock-msg.done { color: var(--green); }
+#stats-lock.shake { animation: field-shake 260ms ease-out; }
+
 #skin-picker {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));

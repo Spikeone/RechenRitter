@@ -178,6 +178,18 @@
         <h3>Zurücksetzen</h3>
         <button class="big-btn danger" id="btn-reset-run">Spielstand löschen</button>
         <button class="big-btn danger" id="btn-reset-stats">Statistik zurücksetzen</button>
+        <div id="stats-lock" class="hidden">
+          <p class="hint small" id="stats-lock-msg">Zum Löschen bitte den Code eingeben.</p>
+          <label class="code-row">
+            <span>Code</span>
+            <input type="password" id="stats-code" inputmode="numeric"
+                   autocomplete="off" maxlength="16">
+          </label>
+          <div class="menu-row">
+            <button class="big-btn danger" id="btn-stats-confirm">Endgültig löschen</button>
+            <button class="big-btn" id="btn-stats-cancel">Abbrechen</button>
+          </div>
+        </div>
 
         <p class="hint small credits">
           Grafiken: 32rogues (Seth Boyles) · Rifts of the Nine Realms (Ronin Lab Studio)

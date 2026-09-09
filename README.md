@@ -33,10 +33,16 @@ dependencies, no framework. It is a static site, so GitHub Pages serves it as is
   still open the rating limits are wider, so the first answer is not penalised for
   the time spent reading the second formula. A wrong answer settles only the card it
   was given on; the other one is still there after *Weiter*.
-- **Regions** — the scenery and the enemy pool change every 10 levels: Wald, Schnee,
-  Wüste, Sumpf, Dunkelwald, Gebirge, Sturmsee, Vulkan, Arkane Arena, Ruinen, Leere.
-  Dragons only live in the volcano. After the last region it starts over and the
-  pools mix.
+- **Regions** — the scenery and the enemy pool change every 10 levels. The first
+  110 levels are a fixed tour through all eleven: Wald, Schnee, Wüste, Sumpf,
+  Dunkelwald, Gebirge, Sturmsee, Vulkan, Arkane Arena, Ruinen, Leere. After that
+  every further lap of eleven regions comes in a shuffled order, so the endless
+  part is never the same twice, still visits each region once per lap, and never
+  repeats one back to back. Which region a level belongs to is fixed for that
+  level, so a saved run always resumes in the place it left. Each region keeps
+  strictly to its own creatures — a dragon only ever turns up in the volcano.
+  Within a region the background also changes at its sixth level, and four
+  regions have a separate boss arena on top.
 - **Adaptive questions** — a fact answered wrong or slowly becomes up to three times
   as likely to come back, and a fact just missed returns within the next few
   questions. Unknown facts stay neutral, so the game never feels like drilling.

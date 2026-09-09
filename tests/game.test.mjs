@@ -2,7 +2,7 @@
 import assert from 'assert';
 import * as cfg from '../js/config.js';
 import { createGame } from '../js/game.js';
-import { biomeFor, backgroundFor, isBiomeStart, enemyKindsFor, allBackgrounds, BIOMES } from '../js/biomes.js';
+import { biomeFor, backgroundFor, isBiomeStart, enemyKindsFor, allBackgrounds, BIOMES, BIOME_LENGTH, TOUR_LENGTH } from '../js/biomes.js';
 import { ENEMIES } from '../assets/sprites/manifest.js';
 
 let passed = 0;
@@ -108,13 +108,88 @@ test('wave time scales for two questions', () => {
 
 // ---------------------------------------------------------------- biomes
 
-test('biomes rotate every 10 levels and wrap around', () => {
-  assert.strictEqual(biomeFor(1).id, 'forest');
-  assert.strictEqual(biomeFor(10).id, 'forest');
-  assert.strictEqual(biomeFor(11).id, 'snow');
-  assert.strictEqual(biomeFor(21).id, 'desert');
-  assert.strictEqual(biomeFor(BIOMES.length * 10 + 1).id, 'forest', 'wraps after the last biome');
+test('the first 110 levels are the fixed tour, ten levels each', () => {
+  assert.strictEqual(TOUR_LENGTH, BIOMES.length * BIOME_LENGTH);
+  assert.strictEqual(TOUR_LENGTH, 110);
+  for (let i = 0; i < BIOMES.length; i++) {
+    const first = i * BIOME_LENGTH + 1;
+    for (let l = first; l < first + BIOME_LENGTH; l++) {
+      assert.strictEqual(biomeFor(l).id, BIOMES[i].id, 'level ' + l);
+    }
+  }
   assert.ok(isBiomeStart(11) && isBiomeStart(21) && !isBiomeStart(12));
+});
+
+test('past the tour each lap is every zone again, shuffled', () => {
+  const zonesOfLap = (lap) => {
+    const out = [];
+    for (let i = 0; i < BIOMES.length; i++) {
+      out.push(biomeFor((lap * BIOMES.length + i) * BIOME_LENGTH + 1).id);
+    }
+    return out;
+  };
+  const tour = zonesOfLap(0);
+  assert.deepStrictEqual(tour, BIOMES.map((b) => b.id), 'lap 0 is the tour in order');
+
+  let differsFromTour = 0;
+  for (let lap = 1; lap <= 8; lap++) {
+    const zones = zonesOfLap(lap);
+    assert.strictEqual(new Set(zones).size, BIOMES.length,
+      'lap ' + lap + ' visits every zone exactly once');
+    if (zones.join() !== tour.join()) differsFromTour++;
+  }
+  assert.strictEqual(differsFromTour, 8, 'and never simply replays the tour');
+});
+
+test('a zone never follows itself, tour and laps alike', () => {
+  let prev = null;
+  for (let block = 0; block < 400; block++) {
+    const id = biomeFor(block * BIOME_LENGTH + 1).id;
+    assert.notStrictEqual(id, prev, 'repeat at block ' + block);
+    prev = id;
+  }
+});
+
+test('the zone for a level never changes between calls', () => {
+  // The header, the background and the enemies all ask separately, and a saved
+  // run asks again after a reload — they have to agree.
+  for (const level of [5, 111, 250, 700, 1234, 4321]) {
+    const first = biomeFor(level).id;
+    for (let n = 0; n < 20; n++) assert.strictEqual(biomeFor(level).id, first, 'level ' + level);
+    assert.strictEqual(backgroundFor(level), backgroundFor(level));
+  }
+});
+
+test('every zone comes up equally often over many laps', () => {
+  const counts = {};
+  const laps = 20;
+  for (let block = 0; block < laps * BIOMES.length; block++) {
+    const id = biomeFor(block * BIOME_LENGTH + 1).id;
+    counts[id] = (counts[id] || 0) + 1;
+  }
+  for (const b of BIOMES) {
+    assert.strictEqual(counts[b.id], laps, b.id + ' appears once per lap');
+  }
+});
+
+test('enemies stay in their own zone, even past the tour', () => {
+  for (const level of [15, 115, 335, 777, 2222]) {
+    const biome = biomeFor(level);
+    for (let n = 0; n < 60; n++) {
+      for (const kind of enemyKindsFor(level, 2, Math.random)) {
+        assert.ok(biome.enemies.indexOf(kind) !== -1,
+          kind + ' does not belong in ' + biome.id + ' at level ' + level);
+      }
+    }
+  }
+  // the dragon is the volcano boss and must not turn up anywhere else
+  for (let level = 1; level <= 600; level++) {
+    if (level % 10 !== 0) continue;
+    const kinds = enemyKindsFor(level, 1, Math.random);
+    if (kinds.indexOf('dragon') !== -1) {
+      assert.strictEqual(biomeFor(level).id, 'volcano', 'dragon at level ' + level);
+    }
+  }
 });
 
 test('backgrounds differ between halves and use the arena on boss levels', () => {

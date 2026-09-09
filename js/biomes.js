@@ -1,4 +1,6 @@
-// Biome rotation: every 10 levels the scenery and the enemy pool change.
+// Biome rotation: every 10 levels the scenery and the enemy pool change. The
+// first 110 levels are a fixed tour through all eleven zones; after that each
+// further lap visits them all again in a shuffled order.
 // Background slugs match the files produced by tools/build-assets.py.
 // Pure module — no DOM, safe to import from node tests.
 
@@ -99,10 +101,64 @@ export const BIOMES = [
 
 export const BIOME_IDS = BIOMES.map((b) => b.id);
 
-const biomeIndex = (level) =>
-  Math.floor((Math.max(1, level) - 1) / BIOME_LENGTH) % BIOMES.length;
+const blockOf = (level) => Math.floor((Math.max(1, level) - 1) / BIOME_LENGTH);
+
+// The zone for a block has to be the same every time it is asked, or the header,
+// the background and the enemies would disagree and a reloaded save could land
+// somewhere else. So the draw is a hash of the lap number, not a live random.
+function lapSeed(lap) {
+  let h = Math.imul(lap + 1, 2654435761);
+  h ^= h >>> 15;
+  h = Math.imul(h, 2246822519);
+  h ^= h >>> 13;
+  return h >>> 0;
+}
+
+// Every zone once, in an order decided by the lap number alone.
+function shuffleFor(lap) {
+  const order = BIOMES.map((_, i) => i);
+  let seed = lapSeed(lap);
+  for (let i = order.length - 1; i > 0; i--) {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    const j = seed % (i + 1);
+    const swap = order[i];
+    order[i] = order[j];
+    order[j] = swap;
+  }
+  return order;
+}
+
+// One lap is every zone once, so the endless part keeps visiting all of them
+// rather than favouring a few.
+function lapOrder(lap) {
+  const order = shuffleFor(lap);
+  // Don't open a lap with the zone that just closed the one before it. Swapping
+  // the first two keeps every zone in the lap exactly once; because it never
+  // touches the last entry, the previous lap can be read from the raw shuffle
+  // and this stays a single step rather than a walk back to the first lap.
+  const prevLast = lap === 1
+    ? BIOMES.length - 1
+    : shuffleFor(lap - 1)[BIOMES.length - 1];
+  if (order.length > 2 && order[0] === prevLast) {
+    const swap = order[0];
+    order[0] = order[1];
+    order[1] = swap;
+  }
+  return order;
+}
+
+function biomeIndex(level) {
+  const block = blockOf(level);
+  // The first lap is the fixed tour, Wald through Leere.
+  if (block < BIOMES.length) return block;
+  const lap = Math.floor(block / BIOMES.length);
+  return lapOrder(lap)[block % BIOMES.length];
+}
 
 export const biomeFor = (level) => BIOMES[biomeIndex(level)];
+
+// Where the fixed tour ends and the shuffled laps begin.
+export const TOUR_LENGTH = BIOMES.length * BIOME_LENGTH;
 
 // True when this level starts a new biome (level 1, 11, 21, ...).
 export const isBiomeStart = (level) => (level - 1) % BIOME_LENGTH === 0;
@@ -126,19 +182,16 @@ export function allBackgrounds() {
   return Array.from(set).sort();
 }
 
-// Enemy kinds for a level. Boss levels always draw from the boss list; from the
-// second lap through the biomes the previous biome's pool mixes in for variety.
+// Enemy kinds for a level. Boss levels always draw from the boss list. Each zone
+// keeps strictly to its own creatures — the variety past the tour comes from the
+// shuffled zone order, so a dragon still only ever turns up in the volcano.
 export function enemyKindsFor(level, count, rng) {
   const biome = biomeFor(level);
   if (isBossLevel(level)) {
     const pool = biome.bosses;
     return [pool[Math.floor(rng() * pool.length) % pool.length]];
   }
-  let pool = biome.enemies;
-  if (level > BIOMES.length * BIOME_LENGTH) {
-    const prev = BIOMES[(biomeIndex(level) + BIOMES.length - 1) % BIOMES.length];
-    pool = pool.concat(prev.enemies);
-  }
+  const pool = biome.enemies;
   const picked = [];
   for (let i = 0; i < count; i++) {
     let kind = pool[Math.floor(rng() * pool.length) % pool.length];

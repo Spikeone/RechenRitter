@@ -359,41 +359,37 @@ button {
 }
 
 /* ---------------- solution card ---------------- */
-/* Pinned to the top of the arena, in the sky the figures never occupy, so it
-   stays clear of the sprites and their health bars along the bottom. Nothing
-   else on screen moves while it is up. */
+/* Fills the keypad's slot while the solution is up. That space is reserved
+   anyway, so nothing on screen moves, the panel sits below the task it explains,
+   and there is room to show everything at a readable size. */
 #solution-card {
   position: absolute;
-  left: 10px;
-  right: 10px;
-  /* Proportional, so the roomy gap on a tall phone shrinks on a short one
-     rather than pushing the panel down onto the figures. */
-  top: 8%;
-  max-height: 84%;
-  overflow: hidden;
-  background: rgba(38, 33, 56, 0.96);
+  left: 0;
+  right: 0;
+  top: 6px;
+  bottom: 0;
+  background: var(--card);
   border: 2px solid var(--red);
-  border-radius: 14px;
-  padding: 6px 12px 8px;
+  border-radius: 16px;
+  padding: 14px 16px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  z-index: 6;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55);
+  gap: 10px;
+  z-index: 5;
 }
 
 #solution-cause {
   font-family: var(--font-pixel);
-  font-size: 0.7rem;
+  font-size: clamp(0.75rem, 3.6vw, 0.95rem);
   color: var(--red);
   letter-spacing: 0.06em;
 }
 
 #solution-formulas {
   font-family: var(--font-pixel);
-  font-size: clamp(0.9rem, 5vw, 1.5rem);
+  font-size: clamp(1.1rem, 6.4vw, 1.9rem);
   color: var(--ink);
   display: grid;
   grid-template-columns: repeat(5, auto);
@@ -413,18 +409,19 @@ button {
 #solution-formulas .answer-part { color: var(--green); }
 
 #solution-given {
-  font-size: 0.75rem;
+  font-size: clamp(0.9rem, 4.2vw, 1.15rem);
   color: var(--ink-dim);
 }
 #solution-given:empty { display: none; }
 #solution-given s { color: var(--red); }
 
-#solution-card .big-btn { margin-top: 2px; padding: 9px 30px; width: auto; }
+#solution-card .big-btn { margin-top: 6px; padding: 15px 46px; width: auto; font-size: 0.9rem; }
 
 /* ---------------- pads ---------------- */
 /* The height is reserved even while both pads are hidden (solution card, pause),
    so showing and hiding them never reflows the arena. */
 #pad-area {
+  position: relative;
   flex: 0 0 auto;
   padding-top: 6px;
   min-height: calc(4 * var(--key-h) + 18px + 6px);
@@ -733,8 +730,6 @@ h3 {
 /* ---------------- small screens ---------------- */
 @media (max-height: 680px) {
   :root { --sprite-solo: 2.7; --sprite-pair: 2.3; --outline: 2px; --key-h: 42px; }
-  #solution-formulas { font-size: clamp(0.8rem, 4.4vw, 1.2rem); }
-  #solution-card .big-btn { padding: 8px 24px; }
   #arena { min-height: 100px; }
   #question-area { min-height: 92px; }
   .hp-bar { height: 17px; }

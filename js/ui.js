@@ -268,9 +268,13 @@ export function createUi(callbacks) {
   function renderFocus(state) {
     cardNodes.forEach((card, index) => {
       const q = state.questions[index];
-      card.classList.toggle('focused', index === state.focus && q && !q.done);
-      card.classList.toggle('solved', !!(q && q.done && q.correct));
-      card.classList.toggle('failed', !!(q && q.done && q.correct === false));
+      // A resolved wave is already gone from state; leave those cards showing
+      // whatever the last render put there instead of clearing them. Passing a
+      // non-boolean to toggle() would flip the class rather than set it.
+      if (!q) return;
+      card.classList.toggle('focused', index === state.focus && !q.done);
+      card.classList.toggle('solved', !!(q.done && q.correct));
+      card.classList.toggle('failed', q.done && q.correct === false);
     });
     enemyNodes.forEach((node, i) => {
       const q = state.questions[state.focus];
@@ -281,16 +285,38 @@ export function createUi(callbacks) {
 
   const cardAt = (index) => cardNodes[index] || null;
 
+  // A wrong answer clears the wave before the UI runs, so renderTyped can no
+  // longer finish the card. This writes the answer straight from the question
+  // that came with the event, which matters because the card stays on screen
+  // above the solution panel.
+  function markCardFailed(index, question) {
+    const card = cardNodes[index];
+    if (!card || !question) return;
+    card.classList.remove('focused');
+    card.classList.add('failed');
+    if (question.kind === 'tf') return;
+    const slot = card.querySelector('.slot');
+    if (!slot) return;
+    slot.innerHTML = '';
+    slot.classList.add('filled');
+    const chars = question.typed.length > 0 ? question.typed.split('') : ['_'];
+    for (const ch of chars) {
+      const span = document.createElement('span');
+      span.className = 'digit';
+      span.textContent = ch;
+      slot.appendChild(span);
+    }
+  }
+
   // ---------------- pads ----------------
   function renderPad(state) {
     const q = state.questions[state.focus];
     const isTf = !!q && q.kind === 'tf';
-    const hide = state.phase === 'paused' || state.phase === 'over';
+    // The solution panel covers this slot, so the keys go away underneath it.
+    const hide = state.phase === 'solution' || state.phase === 'paused'
+      || state.phase === 'over';
     els.numpad.classList.toggle('hidden', isTf || hide);
     els.boolpad.classList.toggle('hidden', !isTf || hide);
-    // While the solution is up the keys stay in place but do nothing, so the
-    // layout does not jump under the player's thumb.
-    if (state.phase === 'solution') setInputLocked(true);
   }
 
   function setInputLocked(locked) {
@@ -632,6 +658,7 @@ export function createUi(callbacks) {
     renderQuestions,
     renderTyped,
     renderFocus,
+    markCardFailed,
     renderPad,
     setInputLocked,
     showSolution,

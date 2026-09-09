@@ -42,14 +42,6 @@
       <div id="player-slot"></div>
       <div id="enemy-slots"></div>
       <div id="fx-layer" aria-hidden="true"></div>
-      <!-- Sits in the empty upper part of the arena, clear of the figures and
-           their health bars along the bottom. -->
-      <div id="solution-card" class="hidden">
-        <div id="solution-cause">FALSCH</div>
-        <div id="solution-formulas"></div>
-        <div id="solution-given"></div>
-        <button class="big-btn primary" id="btn-next">Weiter</button>
-      </div>
       <div id="level-banner" class="hidden"></div>
     </div>
 
@@ -75,6 +67,15 @@
       <div id="boolpad" class="pad hidden">
         <button class="bool-btn bool-yes" data-key="yes">✓ Richtig</button>
         <button class="bool-btn bool-no" data-key="no">✗ Falsch</button>
+      </div>
+
+      <!-- Takes over the keypad's space while the solution is up: below the
+           task, nothing else moves, and Weiter lands under the thumb. -->
+      <div id="solution-card" class="hidden">
+        <div id="solution-cause">FALSCH</div>
+        <div id="solution-formulas"></div>
+        <div id="solution-given"></div>
+        <button class="big-btn primary" id="btn-next">Weiter</button>
       </div>
     </div>
 

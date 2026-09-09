@@ -87,6 +87,7 @@ function onAnswered(ev) {
   } else {
     fx.ratingPopup('wrong');
     audio.playSfx('wrong');
+    ui.markCardFailed(ev.index, ev.question);
     if (ev.question.kind === 'tf') fx.tfStamp(card, false);
     fx.cardEffect(card, 'shake', 300);
     inputLockUntil = now() + INPUT_LOCK_MS;

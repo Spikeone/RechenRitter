@@ -240,13 +240,16 @@ button {
 }
 
 .enemy-name {
-  font-size: 0.72rem;
-  font-weight: 600;
+  font-size: 0.88rem;
+  font-weight: 700;
   color: #fff;
+  background: rgba(10, 8, 20, 0.55);
+  border-radius: 6px;
+  padding: 1px 6px;
   text-shadow: 0 1px 2px #000, 0 0 4px #000;
   letter-spacing: 0.02em;
   white-space: nowrap;
-  max-width: 140px;
+  max-width: 150px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -355,19 +358,27 @@ button {
 }
 
 /* ---------------- solution card ---------------- */
+/* Anchored to the bottom of the question slot and free to grow upward over the
+   arena, which has room to spare — a fixed height made a two-formula timeout
+   spill out past its own border. */
 #solution-card {
   position: absolute;
-  inset: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: auto;
+  min-height: 100%;
   background: var(--card);
   border: 2px solid var(--red);
   border-radius: 14px;
-  padding: 8px 10px;
+  padding: 10px 12px 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 4px;
+  justify-content: flex-end;
+  gap: 6px;
   z-index: 5;
+  box-shadow: 0 -6px 18px rgba(0, 0, 0, 0.5);
 }
 
 #solution-cause {
@@ -381,11 +392,20 @@ button {
   font-family: var(--font-pixel);
   font-size: clamp(0.9rem, 5vw, 1.5rem);
   color: var(--ink);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  text-align: center;
+  display: grid;
+  grid-template-columns: repeat(5, auto);
+  justify-content: center;
+  align-items: center;
+  column-gap: 0.4em;
+  row-gap: 6px;
 }
+/* Each line hands its five cells to the grid above, so several formulas share
+   one set of columns and their operators line up. */
+#solution-formulas .solution-line { display: contents; }
+#solution-formulas .col-x, #solution-formulas .col-y, #solution-formulas .col-z {
+  text-align: right;
+}
+#solution-formulas .col-op, #solution-formulas .col-eq { text-align: center; }
 
 #solution-formulas .answer-part { color: var(--green); }
 

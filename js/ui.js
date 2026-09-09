@@ -297,25 +297,24 @@ export function createUi(callbacks) {
   }
 
   // ---------------- solution card ----------------
+  // Five cells that slot straight into the shared grid, so the operators of
+  // several formulas line up underneath each other.
   function solutionLine(fact) {
     const line = document.createElement('div');
-    const answer = fact.kind === 'tf'
-      ? fact.z
-      : (fact.missing === 'z' ? fact.z : (fact.missing === 'x' ? fact.x : fact.y));
+    line.className = 'solution-line';
     const parts = [
-      { text: String(fact.x), hit: fact.missing === 'x' },
-      { text: MULT, hit: false },
-      { text: String(fact.y), hit: fact.missing === 'y' },
-      { text: '=', hit: false },
-      { text: String(fact.z), hit: fact.missing === 'z' || fact.kind === 'tf' },
+      { text: String(fact.x), col: 'col-x', hit: fact.missing === 'x' },
+      { text: MULT, col: 'col-op', hit: false },
+      { text: String(fact.y), col: 'col-y', hit: fact.missing === 'y' },
+      { text: '=', col: 'col-eq', hit: false },
+      { text: String(fact.z), col: 'col-z', hit: fact.missing === 'z' || fact.kind === 'tf' },
     ];
     for (const part of parts) {
       const span = document.createElement('span');
-      if (part.hit) span.className = 'answer-part';
-      span.textContent = part.text + ' ';
+      span.className = part.col + (part.hit ? ' answer-part' : '');
+      span.textContent = part.text;
       line.appendChild(span);
     }
-    line.dataset.answer = String(answer);
     return line;
   }
 

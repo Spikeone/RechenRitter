@@ -167,18 +167,40 @@ test('with no history every fact is equally likely', () => {
   assert.ok(max < 400, 'none dominates (max ' + max + ')');
 });
 
-test('a missed fact comes back within a few questions', () => {
-  const picker = createPicker({ stats: stats.emptyStats(), rng: Math.random });
-  for (let attempt = 0; attempt < 30; attempt++) {
+test('a missed fact is queued a few questions ahead, not for right now', () => {
+  // Checked on the queue rather than on the picks: a random pick can land on
+  // the same fact by chance, which would make a timing assertion flaky.
+  for (let attempt = 0; attempt < 50; attempt++) {
+    const picker = createPicker({ stats: stats.emptyStats(), rng: Math.random });
     picker.reportMiss({ x: 7, y: 8 });
-    let seenAt = -1;
-    for (let n = 0; n < cfg.REASK_MAX + 1; n++) {
-      const fact = picker.pick(Math.random);
-      if ((fact.x === 7 && fact.y === 8) || (fact.x === 8 && fact.y === 7)) { seenAt = n; break; }
-    }
-    assert.ok(seenAt >= 0, 'the missed fact reappeared within the window');
-    assert.ok(seenAt + 1 >= cfg.REASK_MIN, 'but not immediately');
+    const queued = picker.snapshot();
+    assert.strictEqual(queued.length, 1);
+    assert.strictEqual(queued[0].x, 7);
+    assert.ok(queued[0].inQuestions >= cfg.REASK_MIN,
+      'not the very next question, got ' + queued[0].inQuestions);
+    assert.ok(queued[0].inQuestions <= cfg.REASK_MAX,
+      'but soon, got ' + queued[0].inQuestions);
   }
+});
+
+test('a missed fact comes back within the window', () => {
+  for (let attempt = 0; attempt < 40; attempt++) {
+    const picker = createPicker({ stats: stats.emptyStats(), rng: Math.random });
+    picker.reportMiss({ x: 7, y: 8 });
+    let seen = false;
+    for (let n = 0; n < cfg.REASK_MAX && !seen; n++) {
+      const fact = picker.pick(Math.random);
+      seen = (fact.x === 7 && fact.y === 8) || (fact.x === 8 && fact.y === 7);
+    }
+    assert.ok(seen, 'the missed fact reappeared within ' + cfg.REASK_MAX + ' questions');
+  }
+});
+
+test('a missed fact is not queued twice over', () => {
+  const picker = createPicker({ stats: stats.emptyStats(), rng: Math.random });
+  picker.reportMiss({ x: 7, y: 8 });
+  picker.reportMiss({ x: 8, y: 7 });
+  assert.strictEqual(picker.snapshot().length, 1, 'the commutative twin replaces it');
 });
 
 test('the same fact is not asked twice in a row', () => {

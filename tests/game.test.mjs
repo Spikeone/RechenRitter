@@ -89,15 +89,31 @@ test('rate maps think time to damage', () => {
 
 test('enemy count and hp follow the level rules', () => {
   assert.strictEqual(cfg.enemyCount(1), 1);
-  assert.strictEqual(cfg.enemyCount(14), 1);
-  assert.strictEqual(cfg.enemyCount(15), 2);
-  assert.strictEqual(cfg.enemyCount(20), 1, 'boss levels are single enemies');
-  assert.strictEqual(cfg.enemyCount(21), 2);
-  assert.strictEqual(cfg.enemyHp(1, 1), 3);
-  assert.ok(cfg.enemyHp(20, 1) > cfg.enemyHp(19, 2), 'boss is tougher than one of a pair');
+  assert.strictEqual(cfg.enemyCount(cfg.TWO_ENEMIES_FROM_LEVEL - 1), 1);
   for (let l = 1; l <= 200; l++) {
+    const solo = cfg.enemyCount(l) === 1;
+    if (cfg.isBossLevel(l)) assert.ok(solo, 'boss levels are single enemies, level ' + l);
+    else if (l >= cfg.TWO_ENEMIES_FROM_LEVEL) {
+      assert.strictEqual(cfg.enemyCount(l), 2, 'two enemies from level '
+        + cfg.TWO_ENEMIES_FROM_LEVEL + ', level ' + l);
+    }
     assert.ok(cfg.enemyHp(l, cfg.enemyCount(l)) >= 1);
     assert.ok(cfg.enemyHp(l, 1) <= cfg.HP_MAX * cfg.BOSS_HP_FACTOR + 1);
+  }
+  assert.strictEqual(cfg.enemyHp(1, 1), 3);
+  // a boss carries more than one of a pair on the level just before it
+  const boss = cfg.BOSS_EVERY * 3;
+  assert.ok(cfg.enemyHp(boss, 1) > cfg.enemyHp(boss - 1, 2),
+    'boss is tougher than one of a pair');
+});
+
+test('every region ends on its own boss level', () => {
+  assert.strictEqual(cfg.BOSS_EVERY, BIOME_LENGTH,
+    'the boss rule and the region length are the same number');
+  for (let i = 0; i < BIOMES.length * 3; i++) {
+    const last = (i + 1) * BIOME_LENGTH;
+    assert.ok(cfg.isBossLevel(last), 'level ' + last + ' closes a region and is a boss');
+    assert.ok(!cfg.isBossLevel(last - 1), 'level ' + (last - 1) + ' is not');
   }
 });
 
@@ -108,16 +124,16 @@ test('wave time scales for two questions', () => {
 
 // ---------------------------------------------------------------- biomes
 
-test('the first 110 levels are the fixed tour, ten levels each', () => {
+test('the first lap is the fixed tour, BIOME_LENGTH levels each', () => {
   assert.strictEqual(TOUR_LENGTH, BIOMES.length * BIOME_LENGTH);
-  assert.strictEqual(TOUR_LENGTH, 110);
   for (let i = 0; i < BIOMES.length; i++) {
     const first = i * BIOME_LENGTH + 1;
     for (let l = first; l < first + BIOME_LENGTH; l++) {
       assert.strictEqual(biomeFor(l).id, BIOMES[i].id, 'level ' + l);
     }
   }
-  assert.ok(isBiomeStart(11) && isBiomeStart(21) && !isBiomeStart(12));
+  assert.ok(isBiomeStart(1) && isBiomeStart(BIOME_LENGTH + 1));
+  assert.ok(!isBiomeStart(2) && !isBiomeStart(BIOME_LENGTH));
 });
 
 test('past the tour each lap is every zone again, shuffled', () => {
@@ -193,9 +209,13 @@ test('enemies stay in their own zone, even past the tour', () => {
 });
 
 test('backgrounds differ between halves and use the arena on boss levels', () => {
-  assert.notStrictEqual(backgroundFor(1), backgroundFor(6));
-  assert.strictEqual(backgroundFor(20), biomeFor(20).bossBg);
-  for (let l = 1; l <= 120; l++) assert.ok(/^bg\/[a-z0-9-]+\.webp$/.test(backgroundFor(l)));
+  assert.notStrictEqual(backgroundFor(1), backgroundFor(BIOME_LENGTH - 1),
+    'the scenery changes partway through a region');
+  for (let i = 1; i <= BIOMES.length * 2; i++) {
+    const boss = i * BIOME_LENGTH;
+    assert.strictEqual(backgroundFor(boss), biomeFor(boss).bossBg, 'arena at level ' + boss);
+  }
+  for (let l = 1; l <= 400; l++) assert.ok(/^bg\/[a-z0-9-]+\.webp$/.test(backgroundFor(l)));
 });
 
 test('every biome enemy and boss id exists in the sprite manifest', () => {
@@ -208,11 +228,13 @@ test('every biome enemy and boss id exists in the sprite manifest', () => {
 
 test('boss levels draw a boss, normal levels draw from the biome pool', () => {
   const rng = constRng(0.5);
-  assert.deepStrictEqual(enemyKindsFor(10, 1, rng), biomeFor(10).bosses.slice(0, 1));
-  const pair = enemyKindsFor(15, 2, seq([0.1, 0.1]));
+  const boss = BIOME_LENGTH;
+  assert.deepStrictEqual(enemyKindsFor(boss, 1, rng), biomeFor(boss).bosses.slice(0, 1));
+  const level = cfg.TWO_ENEMIES_FROM_LEVEL + (cfg.isBossLevel(cfg.TWO_ENEMIES_FROM_LEVEL) ? 1 : 0);
+  const pair = enemyKindsFor(level, 2, seq([0.1, 0.1]));
   assert.strictEqual(pair.length, 2);
   assert.notStrictEqual(pair[0], pair[1], 'two enemies should differ');
-  for (const kind of pair) assert.ok(biomeFor(15).enemies.indexOf(kind) !== -1);
+  for (const kind of pair) assert.ok(biomeFor(level).enemies.indexOf(kind) !== -1);
 });
 
 // ---------------------------------------------------------------- questions

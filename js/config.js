@@ -19,7 +19,13 @@ export const HP_MAX = 25;
 export const TWO_ENEMY_HP_FACTOR = 0.6;   // each of two enemies is weaker than a solo one
 export const BOSS_HP_FACTOR = 1.5;
 export const TWO_ENEMIES_FROM_LEVEL = 15;
-export const BOSS_EVERY = 10;             // every 10th level is a single, tougher enemy
+
+// ----- regions -----
+// How many levels one region lasts. The last level of a region is always its
+// boss, so these two are deliberately the same number: a region ends with its
+// own boss creature in its own arena.
+export const BIOME_LENGTH = 6;
+export const BOSS_EVERY = BIOME_LENGTH;
 
 // ----- questions -----
 export const XY_MISSING_FROM_LEVEL = 10;  // before that only z is missing

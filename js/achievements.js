@@ -4,7 +4,14 @@
 // `skin` names a character in assets/sprites/manifest.js that the achievement
 // unlocks. Every skin except the starting knight is behind one of these.
 
+import { biomeStartLevel } from './biomes.js';
+
 const HOUR_MS = 60 * 60 * 1000;
+
+// "Erreiche den Sumpf (Level 19)." — the level is looked up rather than written
+// out, so the texts follow BIOME_LENGTH instead of going stale when it changes.
+const reachText = (article, name, biomeId) =>
+  'Erreiche ' + article + ' ' + name + ' (Level ' + biomeStartLevel(biomeId) + ').';
 
 const seen = (stats, biome) => stats.biomesSeen.indexOf(biome) !== -1;
 
@@ -55,7 +62,7 @@ export const ACHIEVEMENTS = [
   {
     id: 'biome-snow',
     title: 'Schneewanderer',
-    desc: 'Erreiche das Schneegebiet (Level 11).',
+    desc: reachText('das', 'Schneegebiet', 'snow'),
     icon: '❄️',
     skin: 'ranger',
     check: (ctx) => seen(ctx.stats, 'snow'),
@@ -63,7 +70,7 @@ export const ACHIEVEMENTS = [
   {
     id: 'biome-desert',
     title: 'Wüstenläufer',
-    desc: 'Erreiche die Wüste (Level 21).',
+    desc: reachText('die', 'Wüste', 'desert'),
     icon: '🏜️',
     skin: 'shield-knight',
     check: (ctx) => seen(ctx.stats, 'desert'),
@@ -71,7 +78,7 @@ export const ACHIEVEMENTS = [
   {
     id: 'biome-swamp',
     title: 'Sumpfbezwinger',
-    desc: 'Erreiche den Sumpf (Level 31).',
+    desc: reachText('den', 'Sumpf', 'swamp'),
     icon: '🐊',
     skin: 'barbarian',
     check: (ctx) => seen(ctx.stats, 'swamp'),
@@ -79,7 +86,7 @@ export const ACHIEVEMENTS = [
   {
     id: 'biome-darkforest',
     title: 'Dunkelwanderer',
-    desc: 'Erreiche den Dunkelwald (Level 41).',
+    desc: reachText('den', 'Dunkelwald', 'darkforest'),
     icon: '🌲',
     skin: 'elf',
     check: (ctx) => seen(ctx.stats, 'darkforest'),
@@ -87,7 +94,7 @@ export const ACHIEVEMENTS = [
   {
     id: 'biome-mountain',
     title: 'Gipfelstürmer',
-    desc: 'Erreiche das Gebirge (Level 51).',
+    desc: reachText('das', 'Gebirge', 'mountain'),
     icon: '⛰️',
     skin: 'templar',
     check: (ctx) => seen(ctx.stats, 'mountain'),
@@ -95,7 +102,7 @@ export const ACHIEVEMENTS = [
   {
     id: 'biome-ocean',
     title: 'Sturmsegler',
-    desc: 'Erreiche die Sturmsee (Level 61).',
+    desc: reachText('die', 'Sturmsee', 'ocean'),
     icon: '🌊',
     skin: 'fencer',
     check: (ctx) => seen(ctx.stats, 'ocean'),
@@ -103,7 +110,7 @@ export const ACHIEVEMENTS = [
   {
     id: 'biome-volcano',
     title: 'Drachentöter',
-    desc: 'Erreiche den Vulkan (Level 71).',
+    desc: reachText('den', 'Vulkan', 'volcano'),
     icon: '🌋',
     skin: 'wizard',
     check: (ctx) => seen(ctx.stats, 'volcano'),
@@ -111,7 +118,7 @@ export const ACHIEVEMENTS = [
   {
     id: 'biome-arcane',
     title: 'Arkaner Held',
-    desc: 'Erreiche die Arkane Arena (Level 81).',
+    desc: reachText('die', 'Arkane Arena', 'arcane'),
     icon: '🔮',
     skin: 'druid',
     check: (ctx) => seen(ctx.stats, 'arcane'),
@@ -119,7 +126,7 @@ export const ACHIEVEMENTS = [
   {
     id: 'biome-ruins',
     title: 'Ruinenforscher',
-    desc: 'Erreiche die Ruinen (Level 91).',
+    desc: reachText('die', 'Ruinen', 'ruins'),
     icon: '🏚️',
     skin: 'cleric',
     check: (ctx) => seen(ctx.stats, 'ruins'),

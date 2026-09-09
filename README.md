@@ -27,22 +27,22 @@ dependencies, no framework. It is a static site, so GitHub Pages serves it as is
   floor of 10 s (reached at level 26). It freezes while the solution card is up.
 - **Levels** — beating an enemy raises the level and the next enemy has more health.
   Each enemy's bar shows its remaining hit points as a number.
-  Every 10th level is a single tougher **boss**. From level 15 two enemies appear at
+  The last level of every region is a single tougher **boss**. From level 15 two enemies appear at
   once: both formulas are visible, the first is preselected, and answering it moves
   the focus to the second. One shared countdown covers the pair, and while both are
   still open the rating limits are wider, so the first answer is not penalised for
   the time spent reading the second formula. A wrong answer settles only the card it
   was given on; the other one is still there after *Weiter*.
-- **Regions** — the scenery and the enemy pool change every 10 levels. The first
-  110 levels are a fixed tour through all eleven: Wald, Schnee, Wüste, Sumpf,
-  Dunkelwald, Gebirge, Sturmsee, Vulkan, Arkane Arena, Ruinen, Leere. After that
-  every further lap of eleven regions comes in a shuffled order, so the endless
-  part is never the same twice, still visits each region once per lap, and never
-  repeats one back to back. Which region a level belongs to is fixed for that
-  level, so a saved run always resumes in the place it left. Each region keeps
-  strictly to its own creatures — a dragon only ever turns up in the volcano.
-  Within a region the background also changes at its sixth level, and four
-  regions have a separate boss arena on top.
+- **Regions** — the scenery and the enemy pool change every 6 levels
+  (`BIOME_LENGTH` in `js/config.js`). The first 66 levels are a fixed tour
+  through all eleven: Wald, Schnee, Wüste, Sumpf, Dunkelwald, Gebirge, Sturmsee,
+  Vulkan, Arkane Arena, Ruinen, Leere. After that every further lap of eleven
+  regions comes in a shuffled order, so the endless part is never the same twice,
+  still visits each region once per lap, and never repeats one back to back.
+  Which region a level belongs to is fixed for that level, so a saved run always
+  resumes in the place it left. Each region keeps strictly to its own creatures —
+  a dragon only ever turns up in the volcano. A region's last level is always its
+  boss, in its own arena, and the background changes once partway through as well.
 - **Adaptive questions** — a fact answered wrong or slowly becomes up to three times
   as likely to come back, and a fact just missed returns within the next few
   questions. Unknown facts stay neutral, so the game never feels like drilling.

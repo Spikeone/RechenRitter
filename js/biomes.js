@@ -1,12 +1,13 @@
-// Biome rotation: every 10 levels the scenery and the enemy pool change. The
-// first 110 levels are a fixed tour through all eleven zones; after that each
-// further lap visits them all again in a shuffled order.
+// Biome rotation: every BIOME_LENGTH levels the scenery and the enemy pool
+// change. The first lap is a fixed tour through all eleven zones; after that
+// each further lap visits them all again in a shuffled order.
 // Background slugs match the files produced by tools/build-assets.py.
 // Pure module — no DOM, safe to import from node tests.
 
-import { isBossLevel } from './config.js';
+import { isBossLevel, BIOME_LENGTH } from './config.js';
 
-export const BIOME_LENGTH = 10;
+// Re-exported so callers can reach it from here, where the regions live.
+export { BIOME_LENGTH };
 
 export const BIOMES = [
   {
@@ -160,8 +161,15 @@ export const biomeFor = (level) => BIOMES[biomeIndex(level)];
 // Where the fixed tour ends and the shuffled laps begin.
 export const TOUR_LENGTH = BIOMES.length * BIOME_LENGTH;
 
-// True when this level starts a new biome (level 1, 11, 21, ...).
+// True when this level starts a new biome.
 export const isBiomeStart = (level) => (level - 1) % BIOME_LENGTH === 0;
+
+// The level a region of the fixed tour begins on — used for the achievement
+// texts, so they cannot drift when BIOME_LENGTH changes.
+export function biomeStartLevel(id) {
+  const index = BIOMES.findIndex((b) => b.id === id);
+  return index < 0 ? 1 : index * BIOME_LENGTH + 1;
+}
 
 // Which background this level shows: first half / second half of the block, and
 // the dedicated arena on boss levels.

@@ -285,9 +285,12 @@ export function createUi(callbacks) {
   function renderPad(state) {
     const q = state.questions[state.focus];
     const isTf = !!q && q.kind === 'tf';
-    const hide = state.phase === 'solution' || state.phase === 'paused' || state.phase === 'over';
+    const hide = state.phase === 'paused' || state.phase === 'over';
     els.numpad.classList.toggle('hidden', isTf || hide);
     els.boolpad.classList.toggle('hidden', !isTf || hide);
+    // While the solution is up the keys stay in place but do nothing, so the
+    // layout does not jump under the player's thumb.
+    if (state.phase === 'solution') setInputLocked(true);
   }
 
   function setInputLocked(locked) {
@@ -335,7 +338,6 @@ export function createUi(callbacks) {
       els.solutionGiven.appendChild(wrap);
     }
 
-    els.questions.classList.add('hidden');
     els.solution.classList.remove('hidden');
     els.solution.classList.add('show');
     setTimeout(() => els.solution.classList.remove('show'), 340);
@@ -344,7 +346,6 @@ export function createUi(callbacks) {
 
   function hideSolution() {
     els.solution.classList.add('hidden');
-    els.questions.classList.remove('hidden');
   }
 
   // ---------------- start screen ----------------

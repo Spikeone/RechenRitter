@@ -77,7 +77,7 @@ function unlockAchievements(event) {
 }
 
 function onAnswered(ev) {
-  const card = ui.cardAt(game.state.questions.indexOf(ev.question));
+  const card = ui.cardAt(ev.index);
   if (ev.correct) {
     fx.ratingPopup(ev.rating.id);
     audio.playSfx(ev.rating.id);

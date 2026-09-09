@@ -207,6 +207,9 @@ export function createGame(options) {
 
   function resolve(question, events) {
     const q = question;
+    // Captured before a wrong answer clears the wave, so the UI can still find
+    // the card this belonged to.
+    const index = state.questions.indexOf(q);
     const fact = { x: q.x, y: q.y, z: q.z, missing: q.missing, kind: q.kind, shown: q.shown };
     const correct = q.kind === 'tf'
       ? q.chosen === q.isTrue
@@ -226,6 +229,7 @@ export function createGame(options) {
       events.push({
         type: 'answered',
         correct: true,
+        index,
         question: q,
         fact,
         rating,
@@ -271,6 +275,7 @@ export function createGame(options) {
     events.push({
       type: 'answered',
       correct: false,
+      index,
       question: q,
       fact,
       rating: null,

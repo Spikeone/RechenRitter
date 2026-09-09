@@ -28,6 +28,9 @@ let lowWarned = false;
 let inputLockUntil = 0;
 let pausedAt = 0;
 let returnOverlay = 'overlay-start';
+// Set while wiping storage, so the save-on-unload handlers cannot write the
+// old in-memory state straight back over the reset.
+let persistDisabled = false;
 
 const now = () => (window.performance ? performance.now() : Date.now());
 const locked = () => now() < inputLockUntil;
@@ -35,6 +38,7 @@ const locked = () => now() < inputLockUntil;
 // ---------------------------------------------------------------- persistence
 
 function persistRun() {
+  if (persistDisabled) return;
   if (game.state.phase === 'idle' || game.state.phase === 'over') return;
   const snap = game.snapshot();
   snap.picker = picker.snapshot();
@@ -43,6 +47,7 @@ function persistRun() {
 }
 
 function persistStats(force) {
+  if (persistDisabled) return;
   const t = now();
   if (!force && t - statsDirty < 1000) return;
   statsDirty = t;
@@ -515,7 +520,11 @@ function boot() {
         ui.renderSettings(settings, unlockedSkins(unlocked, DEFAULT_SKIN));
       },
       achievements: ACHIEVEMENTS,
-      resetAll() { storage.resetAll(); location.reload(); },
+      resetAll() {
+        persistDisabled = true;
+        storage.resetAll();
+        location.reload();
+      },
       picker: () => picker,
       biomeFor,
     };

@@ -209,6 +209,12 @@ function dispatch(events) {
         ui.hideOverlays();
         music.setDucked(false);
         break;
+      case 'waveResumed':
+        // Back to the questions that are still open on this wave.
+        ui.hideSolution();
+        ui.renderPad(game.state);
+        music.setDucked(false);
+        break;
       default:
         break;
     }

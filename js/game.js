@@ -167,10 +167,12 @@ export function createGame(options) {
     return false;
   }
 
+  // The questions stay in state on purpose. A wrong answer settles only the
+  // card it was given on; anything still open is answered after the solution
+  // has been read, on the same wave clock.
   function enterSolution(events, payload) {
     state.phase = 'solution';
     state.solution = payload;
-    state.questions = [];
     events.push({ type: 'showSolution', solution: payload });
   }
 
@@ -210,6 +212,9 @@ export function createGame(options) {
     // Captured before a wrong answer clears the wave, so the UI can still find
     // the card this belonged to.
     const index = state.questions.indexOf(q);
+    // Counted before this one is settled: it says how many formulas the player
+    // was holding in their head while answering.
+    const openQuestions = state.questions.filter((item) => !item.done).length;
     const fact = { x: q.x, y: q.y, z: q.z, missing: q.missing, kind: q.kind, shown: q.shown };
     const correct = q.kind === 'tf'
       ? q.chosen === q.isTrue
@@ -219,7 +224,7 @@ export function createGame(options) {
     q.correct = correct;
 
     if (correct) {
-      const rating = rate(state.level, q.thinkMs, q.kind);
+      const rating = rate(state.level, q.thinkMs, q.kind, openQuestions);
       state.run.correct += 1;
       state.run[rating.id] += 1;
       state.streakCorrect += 1;
@@ -373,11 +378,21 @@ export function createGame(options) {
     return [{ type: 'focus', index }];
   }
 
-  // Leaves the solution card and deals the next wave.
+  // Weiter: back to whatever is still open on this wave, or on to the next one.
   function next() {
     if (state.phase !== 'solution') return NO_EVENTS;
     state.solution = null;
     const events = [];
+
+    if (state.questions.some((item) => !item.done)) {
+      state.phase = 'running';
+      advanceFocus();
+      events.push({ type: 'waveResumed', index: state.focus });
+      events.push({ type: 'focus', index: state.focus });
+      return events;
+    }
+
+    if (aliveCount() === 0) finishLevel(events);
     dealWave(events);
     return events;
   }
@@ -406,6 +421,11 @@ export function createGame(options) {
     const events = [];
     const unanswered = state.questions.filter((item) => !item.done);
     state.run.timeouts += 1;
+    // Time is up for the whole wave, so nothing open can still be answered.
+    for (const item of unanswered) {
+      item.done = true;
+      item.correct = false;
+    }
     if (picker) for (const item of unanswered) picker.reportMiss({ x: item.x, y: item.y });
     events.push({ type: 'timeout', unanswered: unanswered.slice() });
     if (loseLife(events, 'timeout')) return events;

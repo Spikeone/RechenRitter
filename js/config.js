@@ -72,14 +72,19 @@ export function enemyHp(level, count) {
 export const waveMs = (level, questionCount) =>
   Math.round(timerMs(level) * (questionCount > 1 ? PAIR_TIMER_FACTOR : 1));
 
-export const ratingBands = (level, kind) => {
-  const scale = kind === 'tf' ? TRUE_FALSE_BAND_FACTOR : 1;
+// `openQuestions` is how many questions were still unanswered when this one was
+// given. While two are on screen the player is reading both, and the first one
+// answered would otherwise be charged for all of it — so its limits widen by the
+// same factor the wave clock already uses for a pair.
+export const ratingBands = (level, kind, openQuestions) => {
+  const scale = (kind === 'tf' ? TRUE_FALSE_BAND_FACTOR : 1)
+    * (openQuestions > 1 ? PAIR_TIMER_FACTOR : 1);
   const t = timerMs(level);
   return RATINGS.map((r) => ({ ...r, maxMs: Math.max(r.floorMs, t * r.frac) * scale }));
 };
 
-export function rate(level, thinkMs, kind) {
-  const band = ratingBands(level, kind).find((b) => thinkMs <= b.maxMs);
+export function rate(level, thinkMs, kind, openQuestions) {
+  const band = ratingBands(level, kind, openQuestions).find((b) => thinkMs <= b.maxMs);
   return band || SLOW_RATING;
 }
 

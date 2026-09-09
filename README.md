@@ -29,7 +29,10 @@ dependencies, no framework. It is a static site, so GitHub Pages serves it as is
   Each enemy's bar shows its remaining hit points as a number.
   Every 10th level is a single tougher **boss**. From level 15 two enemies appear at
   once: both formulas are visible, the first is preselected, and answering it moves
-  the focus to the second. One shared countdown covers the pair.
+  the focus to the second. One shared countdown covers the pair, and while both are
+  still open the rating limits are wider, so the first answer is not penalised for
+  the time spent reading the second formula. A wrong answer settles only the card it
+  was given on; the other one is still there after *Weiter*.
 - **Regions** — the scenery and the enemy pool change every 10 levels: Wald, Schnee,
   Wüste, Sumpf, Dunkelwald, Gebirge, Sturmsee, Vulkan, Arkane Arena, Ruinen, Leere.
   Dragons only live in the volcano. After the last region it starts over and the

@@ -55,6 +55,30 @@ test('true/false bands are tighter than fill bands', () => {
   assert.strictEqual(cfg.rate(1, 2900, 'tf').id, 'perfect');
 });
 
+test('holding two formulas widens the rating limits for the first answered', () => {
+  const solo = cfg.ratingBands(15, 'fill', 1);
+  const pair = cfg.ratingBands(15, 'fill', 2);
+  for (let i = 0; i < solo.length; i++) {
+    assert.ok(pair[i].maxMs > solo[i].maxMs, pair[i].id + ' is more generous with two open');
+  }
+  assert.strictEqual(cfg.rate(15, 8000, 'fill', 1).id, 'slow', 'harsh when only one is open');
+  assert.strictEqual(cfg.rate(15, 8000, 'fill', 2).id, 'good', 'fair while both are open');
+  assert.deepStrictEqual(cfg.ratingBands(15, 'fill'), solo, 'one open is the default');
+});
+
+test('the first card of a pair is not charged for reading the second', () => {
+  const game = createGame({ rng: constRng(0.5) });
+  game.setLevel(15);
+  // Eight seconds to take in both formulas and answer the first.
+  game.advance(8000);
+  const first = solve(game).find((e) => e.type === 'answered');
+  assert.strictEqual(first.rating.id, 'good');
+  assert.ok(first.damage > 0, 'the first enemy takes damage too');
+  const second = solve(game).find((e) => e.type === 'answered');
+  assert.strictEqual(second.rating.id, 'excellent', 'the second is rated on its own clock');
+  assert.ok(game.state.enemies.every((e) => e.hp < e.maxHp), 'both enemies were hit');
+});
+
 test('rate maps think time to damage', () => {
   assert.strictEqual(cfg.rate(1, 500).damage, 3);
   assert.strictEqual(cfg.rate(1, 5000).damage, 2);
@@ -338,10 +362,10 @@ test('a wrong answer costs a life and shows the solution', () => {
   const shown = events.find((e) => e.type === 'showSolution');
   assert.strictEqual(shown.solution.cause, 'wrong');
   assert.strictEqual(shown.solution.facts[0].z, q.z);
-  assert.strictEqual(game.state.questions.length, 0, 'formula is cleared behind the solution card');
+  assert.ok(game.state.questions[0].done, 'the question it was given on is settled');
 
   const nextEvents = game.next();
-  assert.ok(nextEvents.find((e) => e.type === 'dealt'));
+  assert.ok(nextEvents.find((e) => e.type === 'dealt'), 'the only question was settled, so a new wave comes');
   assert.strictEqual(game.state.phase, 'running');
   assert.strictEqual(game.state.waveMs, game.state.waveMaxMs, 'the timer restarts');
 });
@@ -367,6 +391,57 @@ test('running out of time costs a life and explains the answer', () => {
   const shown = events.find((e) => e.type === 'showSolution');
   assert.strictEqual(shown.solution.cause, 'timeout');
   assert.strictEqual(shown.solution.facts[0].z, q.z);
+});
+
+test('a wrong answer on one of two cards leaves the other answerable', () => {
+  const game = createGame({ rng: constRng(0.5) });
+  game.setLevel(15);
+  assert.strictEqual(game.state.questions.length, 2);
+  const other = game.state.questions[1];
+  const enemyHpBefore = game.state.enemies[1].hp;
+
+  fail(game);
+  assert.strictEqual(game.state.phase, 'solution');
+  assert.strictEqual(game.state.lives, cfg.LIVES - 1);
+  assert.ok(game.state.questions[0].done, 'the card that was wrong is settled');
+  assert.ok(!game.state.questions[1].done, 'the other card is untouched');
+  assert.strictEqual(game.state.questions[1], other, 'and it is the very same question');
+
+  const events = game.next();
+  assert.ok(!events.find((e) => e.type === 'dealt'), 'no fresh wave is dealt');
+  assert.ok(events.find((e) => e.type === 'waveResumed'));
+  assert.strictEqual(game.state.phase, 'running');
+  assert.strictEqual(game.state.focus, 1, 'focus moves to the open card');
+  assert.strictEqual(game.state.questions[1], other);
+
+  solve(game);
+  const hit = game.state.enemies[1].hp;
+  assert.ok(hit < enemyHpBefore, 'answering it still damages its enemy');
+  assert.strictEqual(game.state.phase, 'hold', 'and now the wave is over');
+});
+
+test('the wave clock keeps its remaining time across a solution', () => {
+  const game = createGame({ rng: constRng(0.5) });
+  game.setLevel(15);
+  game.advance(5000);
+  const left = game.state.waveMs;
+  fail(game);
+  assert.strictEqual(game.advance(9000).length, 0, 'frozen while the solution is up');
+  assert.strictEqual(game.state.waveMs, left, 'no time is lost reading it');
+  game.next();
+  assert.strictEqual(game.state.waveMs, left, 'and the wave carries on with what was left');
+  assert.ok(game.state.waveMs < game.state.waveMaxMs);
+});
+
+test('a timeout forfeits every open card on the wave', () => {
+  const game = createGame({ rng: constRng(0.5) });
+  game.setLevel(15);
+  game.advance(game.state.waveMaxMs + 1);
+  assert.strictEqual(game.state.phase, 'solution');
+  assert.ok(game.state.questions.every((q) => q.done), 'nothing is left to answer');
+  const events = game.next();
+  assert.ok(events.find((e) => e.type === 'dealt'), 'so Weiter deals a fresh wave');
+  assert.strictEqual(game.state.waveMs, game.state.waveMaxMs);
 });
 
 test('losing every life ends the game', () => {

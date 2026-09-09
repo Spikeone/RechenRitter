@@ -1,0 +1,6 @@
+{
+  "name": "rechenritter",
+  "private": true,
+  "type": "module",
+  "description": "Only present so `node tests/*.mjs` can import the ES modules in js/. No dependencies, no build step."
+}

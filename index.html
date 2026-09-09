@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Rechenritter</title>
+  <meta name="description" content="Rechenritter — das Einmaleins-Abenteuer. Rechne schnell und besiege die Gegner.">
+  <meta name="theme-color" content="#151322">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Rechenritter">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="favicon.png">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/effects.css">
+  <!-- Figuren & Gegner: 32rogues von Seth Boyles. Hintergründe: Rifts of the
+       Nine Realms Biomes von Ronin Lab Studio. Schrift: Press Start 2P. -->
+</head>
+<body>
+  <div id="app">
+    <!-- ================= game screen ================= -->
+    <header id="hud">
+      <button class="icon-btn" id="btn-pause" aria-label="Pause">❚❚</button>
+      <div id="hud-center">
+        <div id="hud-level">Level 1</div>
+        <div id="hud-biome">Wald</div>
+      </div>
+      <div id="hud-lives" aria-label="Leben"></div>
+    </header>
+
+    <div id="timer-bar"><div id="timer-fill"></div></div>
+
+    <div id="arena">
+      <div class="bg-layer" id="bg-a"></div>
+      <div class="bg-layer" id="bg-b"></div>
+      <div id="ground"></div>
+      <div id="player-slot"></div>
+      <div id="enemy-slots"></div>
+      <div id="fx-layer" aria-hidden="true"></div>
+      <div id="level-banner" class="hidden"></div>
+    </div>
+
+    <div id="question-area">
+      <div id="questions"></div>
+
+      <div id="solution-card" class="hidden">
+        <div id="solution-cause">FALSCH</div>
+        <div id="solution-formulas"></div>
+        <div id="solution-given"></div>
+        <button class="big-btn primary" id="btn-next">Weiter</button>
+      </div>
+    </div>
+
+    <div id="pad-area">
+      <div id="numpad" class="pad">
+        <button class="key" data-key="1">1</button>
+        <button class="key" data-key="2">2</button>
+        <button class="key" data-key="3">3</button>
+        <button class="key" data-key="4">4</button>
+        <button class="key" data-key="5">5</button>
+        <button class="key" data-key="6">6</button>
+        <button class="key" data-key="7">7</button>
+        <button class="key" data-key="8">8</button>
+        <button class="key" data-key="9">9</button>
+        <button class="key key-back" data-key="back" aria-label="Löschen">⌫</button>
+        <button class="key" data-key="0">0</button>
+        <button class="key key-ok" data-key="ok" aria-label="Bestätigen">OK</button>
+      </div>
+      <div id="boolpad" class="pad hidden">
+        <button class="bool-btn bool-yes" data-key="yes">✓ Richtig</button>
+        <button class="bool-btn bool-no" data-key="no">✗ Falsch</button>
+      </div>
+    </div>
+
+    <!-- ================= overlays ================= -->
+    <div class="overlay hidden" id="overlay-start">
+      <div class="card start-card">
+        <h1 class="game-title">Rechenritter</h1>
+        <p class="subtitle">Das Einmaleins-Abenteuer</p>
+        <div id="start-hero"></div>
+        <button class="big-btn primary hidden" id="btn-continue">
+          <span>Weiter spielen</span><small id="continue-info"></small>
+        </button>
+        <button class="big-btn" id="btn-new">Neues Spiel</button>
+        <div class="menu-row">
+          <button class="menu-btn" id="btn-stats">📊<span>Statistik</span></button>
+          <button class="menu-btn" id="btn-achievements">🏆<span>Erfolge</span></button>
+          <button class="menu-btn" id="btn-settings">⚙️<span>Einstellungen</span></button>
+        </div>
+        <p class="hint" id="start-best"></p>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="overlay-pause">
+      <div class="card pause-card" id="pause-card">
+        <h2>Pause</h2>
+        <p class="hint">Tippen zum Weiterspielen</p>
+        <p class="hint small">Nach der Pause kommt eine neue Aufgabe.</p>
+        <div class="menu-row no-resume">
+          <button class="menu-btn" id="btn-pause-settings">⚙️<span>Einstellungen</span></button>
+          <button class="menu-btn" id="btn-pause-menu">🏠<span>Menü</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="overlay-gameover">
+      <div class="card">
+        <h2 id="gameover-title">Vorbei!</h2>
+        <div id="gameover-level"></div>
+        <p class="record hidden" id="gameover-record">Neuer Rekord!</p>
+        <div class="stat-grid" id="gameover-stats"></div>
+        <button class="big-btn primary" id="btn-again">Nochmal</button>
+        <button class="big-btn" id="btn-gameover-menu">Menü</button>
+      </div>
+    </div>
+
+    <div class="overlay hidden scroll" id="overlay-stats">
+      <div class="card wide">
+        <h2>Statistik</h2>
+        <div class="stat-grid" id="stats-grid"></div>
+        <h3>Deine Aufgaben</h3>
+        <p class="hint small">Grün = sitzt, Rot = üben. Tippe auf ein Feld.</p>
+        <div id="fact-grid"></div>
+        <p class="fact-detail" id="fact-detail">&nbsp;</p>
+        <h3>Letzte 30 Tage</h3>
+        <div id="day-strip"></div>
+        <button class="big-btn" data-close="overlay-stats">Zurück</button>
+      </div>
+    </div>
+
+    <div class="overlay hidden scroll" id="overlay-achievements">
+      <div class="card wide">
+        <h2>Erfolge</h2>
+        <p class="hint small" id="achievement-count"></p>
+        <div id="achievement-list"></div>
+        <button class="big-btn" data-close="overlay-achievements">Zurück</button>
+      </div>
+    </div>
+
+    <div class="overlay hidden scroll" id="overlay-settings">
+      <div class="card wide">
+        <h2>Einstellungen</h2>
+
+        <label class="setting-row">
+          <span>Stumm</span>
+          <input type="checkbox" id="set-muted">
+        </label>
+        <label class="setting-row">
+          <span>Effekte</span>
+          <input type="range" id="set-sfx" min="0" max="1" step="0.05">
+        </label>
+        <label class="setting-row">
+          <span>Musik</span>
+          <input type="range" id="set-music" min="0" max="1" step="0.05">
+        </label>
+        <label class="setting-row">
+          <span>Zeitbalken anzeigen</span>
+          <input type="checkbox" id="set-timerbar">
+        </label>
+
+        <h3>Figur</h3>
+        <div id="skin-picker"></div>
+
+        <h3>Zurücksetzen</h3>
+        <button class="big-btn danger" id="btn-reset-run">Spielstand löschen</button>
+        <button class="big-btn danger" id="btn-reset-stats">Statistik zurücksetzen</button>
+
+        <p class="hint small credits">
+          Grafiken: 32rogues (Seth Boyles) · Rifts of the Nine Realms (Ronin Lab Studio)
+        </p>
+        <button class="big-btn" data-close="overlay-settings">Zurück</button>
+      </div>
+    </div>
+
+    <div id="toast" class="hidden"></div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

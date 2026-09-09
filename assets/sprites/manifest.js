@@ -7,9 +7,11 @@
 
 export const TILE = 32;
 
+// Every sheet in this pack is drawn facing left, so `facesLeft` is true
+// throughout; the flag exists for packs that mix directions.
 export const SHEETS = {
   rogues: { file: 'assets/sprites/rogues.png', cols: 7, rows: 7, facesLeft: true },
-  monsters: { file: 'assets/sprites/monsters.png', cols: 12, rows: 13, facesLeft: false },
+  monsters: { file: 'assets/sprites/monsters.png', cols: 12, rows: 13, facesLeft: true },
   animals: { file: 'assets/sprites/animals.png', cols: 9, rows: 16, facesLeft: true },
 };
 

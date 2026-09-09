@@ -464,6 +464,13 @@ const callbacks = {
     unlocked = {};
     storage.saveAchievements(unlocked);
     picker = createPicker({ stats });
+    // The achievements go with the statistics, so every other figure is locked
+    // again — the chosen one has to come back to the starting knight with them.
+    settings.skin = DEFAULT_SKIN;
+    storage.saveSettings(settings);
+    game.state.skin = DEFAULT_SKIN;
+    ui.renderPlayer(DEFAULT_SKIN);
+    persistRun();
     ui.renderSettings(settings, unlockedSkins(unlocked, DEFAULT_SKIN));
     ui.statsLockDone();
   },

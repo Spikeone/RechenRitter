@@ -70,7 +70,8 @@ dependencies, no framework. It is a static site, so GitHub Pages serves it as is
 - **Erfolge** — 32 achievements. Nine of them unlock a new character.
 - **Einstellungen** — sound and music volume, mute, timer bar on/off, missing
   factor on/off, character selection, a two-tap reset for the saved run, and a
-  code-protected reset for the statistics. The code is `STATS_RESET_CODE` in
+  code-protected reset for the statistics, which also clears the achievements and
+  puts the chosen figure back to the starting knight. The code is `STATS_RESET_CODE` in
   `js/config.js`. It is a child lock, not security: it stops an impulsive tap
   wiping months of history, but it sits in the source like every other setting
   and anyone who reads the code can find it.

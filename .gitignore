@@ -1,3 +1,6 @@
 # Raw asset packs (37 MB) — built artefacts under assets/ are committed instead.
 DownloadedRaw/
 tools/_extract/
+
+# Review sheet for checking the familiar names, regenerate when needed.
+familiar-names.png

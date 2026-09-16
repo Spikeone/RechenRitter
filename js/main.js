@@ -38,6 +38,7 @@ let returnOverlay = 'overlay-start';
 // Set while wiping storage, so the save-on-unload handlers cannot write the
 // old in-memory state straight back over the reset.
 let persistDisabled = false;
+let lastDayCheck = 0;
 
 const now = () => (window.performance ? performance.now() : Date.now());
 const locked = () => now() < inputLockUntil;
@@ -311,6 +312,14 @@ function step(timestamp) {
     lastFrame = timestamp;
     return;
   }
+  // Midnight has to land even mid-game, or answers given after it would be
+  // counted onto yesterday and then thrown away at the next visit to the menu.
+  // Once a second is plenty and keeps the date work off the frame.
+  if (timestamp - lastDayCheck >= 1000) {
+    lastDayCheck = timestamp;
+    if (refreshDay()) ui.renderDaily(daily, familiars);
+  }
+
   const elapsed = Math.min(1000, Math.max(0, timestamp - lastFrame));
   lastFrame = timestamp;
   if (elapsed === 0) return;

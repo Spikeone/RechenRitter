@@ -26,7 +26,7 @@ export const QUESTS = [
   { id: 'correct-40', track: 'correct', target: 40, title: '40 richtige Antworten' },
   { id: 'correct-75', track: 'correct', target: 75, title: '75 richtige Antworten' },
   { id: 'excellent-15', track: 'excellent', target: 15, title: '15× Exzellent' },
-  { id: 'excellent-30', track: 'excellent', target: 30, title: '30× Exzellent' },
+  { id: 'correct-30', track: 'correct', target: 30, title: '30 richtige Antworten' },
   { id: 'defeated-15', track: 'defeated', target: 15, title: '15 Gegner besiegen' },
   { id: 'bosses-3', track: 'bosses', target: 3, title: '3 Bosse besiegen' },
   { id: 'level-12', track: 'bestLevel', target: 12, title: 'Level 12 erreichen' },

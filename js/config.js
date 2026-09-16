@@ -3,12 +3,23 @@
 
 export const LIVES = 5;
 
+// ----- regions -----
+// How many levels one region lasts. The last level of a region is always its
+// boss, so these two are deliberately the same number: a region ends with its
+// own boss creature in its own arena.
+export const BIOME_LENGTH = 6;
+export const BOSS_EVERY = BIOME_LENGTH;
+
 // ----- timer -----
-// Level 1 gives 30s per wave, shrinking by 800ms per level down to a hard floor
-// of 10s (reached at level 26).
-export const TIMER_BASE_MS = 30000;
-export const TIMER_STEP_MS = 800;
+// The first region runs on the full minute, so a beginner has room to think.
+// From there it shortens by the same amount every level until the fixed tour is
+// over and the regions start coming at random, where it settles at its floor.
+export const TIMER_START_MS = 60000;
 export const TIMER_MIN_MS = 10000;
+export const TIMER_FLAT_UNTIL_LEVEL = BIOME_LENGTH;
+// The level the floor is reached on: the first one past the fixed tour.
+// tests/game.test.mjs ties this to the region layout so the two cannot drift.
+export const TIMER_FLOOR_LEVEL = 67;
 // Two questions at once get more than one question's time, but less than double.
 export const PAIR_TIMER_FACTOR = 1.75;
 
@@ -19,13 +30,6 @@ export const HP_MAX = 25;
 export const TWO_ENEMY_HP_FACTOR = 0.6;   // each of two enemies is weaker than a solo one
 export const BOSS_HP_FACTOR = 1.5;
 export const TWO_ENEMIES_FROM_LEVEL = 15;
-
-// ----- regions -----
-// How many levels one region lasts. The last level of a region is always its
-// boss, so these two are deliberately the same number: a region ends with its
-// own boss creature in its own arena.
-export const BIOME_LENGTH = 6;
-export const BOSS_EVERY = BIOME_LENGTH;
 
 // ----- questions -----
 export const XY_MISSING_FROM_LEVEL = 10;  // before that only z is missing
@@ -61,8 +65,13 @@ export const REASK_MIN = 2;           // a missed fact comes back after 2..5 que
 export const REASK_MAX = 5;
 
 // ----- derived -----
-export const timerMs = (level) =>
-  Math.max(TIMER_MIN_MS, TIMER_BASE_MS - (level - 1) * TIMER_STEP_MS);
+export function timerMs(level) {
+  if (level <= TIMER_FLAT_UNTIL_LEVEL) return TIMER_START_MS;
+  if (level >= TIMER_FLOOR_LEVEL) return TIMER_MIN_MS;
+  const span = TIMER_FLOOR_LEVEL - TIMER_FLAT_UNTIL_LEVEL;
+  const perLevel = (TIMER_START_MS - TIMER_MIN_MS) / span;
+  return Math.round(TIMER_START_MS - (level - TIMER_FLAT_UNTIL_LEVEL) * perLevel);
+}
 
 export const isBossLevel = (level) => level % BOSS_EVERY === 0;
 

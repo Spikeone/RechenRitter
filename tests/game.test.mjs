@@ -31,11 +31,37 @@ const flushHold = (game) => {
 
 // ---------------------------------------------------------------- config
 
-test('timer starts at 30s and never drops below the 10s floor', () => {
-  assert.strictEqual(cfg.timerMs(1), 30000);
-  assert.strictEqual(cfg.timerMs(2), 29200);
-  assert.strictEqual(cfg.timerMs(26), 10000);
-  for (let l = 1; l <= 200; l++) assert.ok(cfg.timerMs(l) >= cfg.TIMER_MIN_MS);
+test('the timer holds a full minute, then shortens evenly to its floor', () => {
+  for (let l = 1; l <= cfg.TIMER_FLAT_UNTIL_LEVEL; l++) {
+    assert.strictEqual(cfg.timerMs(l), cfg.TIMER_START_MS,
+      'the first region keeps the full minute, level ' + l);
+  }
+  assert.ok(cfg.timerMs(cfg.TIMER_FLAT_UNTIL_LEVEL + 1) < cfg.TIMER_START_MS,
+    'and it starts shortening right after');
+  assert.strictEqual(cfg.timerMs(cfg.TIMER_FLOOR_LEVEL), cfg.TIMER_MIN_MS);
+
+  for (let l = 1; l <= 300; l++) {
+    assert.ok(cfg.timerMs(l) >= cfg.TIMER_MIN_MS, 'floor holds at ' + l);
+    if (l > 1) assert.ok(cfg.timerMs(l) <= cfg.timerMs(l - 1), 'never rises at ' + l);
+    if (l >= cfg.TIMER_FLOOR_LEVEL) {
+      assert.strictEqual(cfg.timerMs(l), cfg.TIMER_MIN_MS, 'flat past the floor at ' + l);
+    }
+  }
+
+  // the shortening is even: every step between the two ends is the same size
+  const steps = [];
+  for (let l = cfg.TIMER_FLAT_UNTIL_LEVEL + 1; l < cfg.TIMER_FLOOR_LEVEL; l++) {
+    steps.push(cfg.timerMs(l - 1) - cfg.timerMs(l));
+  }
+  const spread = Math.max.apply(null, steps) - Math.min.apply(null, steps);
+  assert.ok(spread <= 1, 'the steps are equal bar rounding, spread ' + spread);
+});
+
+test('the timer reaches its floor exactly where the fixed tour ends', () => {
+  assert.strictEqual(cfg.TIMER_FLOOR_LEVEL, TOUR_LENGTH + 1,
+    'the shortest timer starts with the first randomly ordered region');
+  assert.strictEqual(cfg.TIMER_FLAT_UNTIL_LEVEL, BIOME_LENGTH,
+    'the full minute covers exactly the first region');
 });
 
 test('rating bands stay ordered and reachable at every level', () => {
@@ -44,15 +70,24 @@ test('rating bands stay ordered and reachable at every level', () => {
       const bands = cfg.ratingBands(l, kind);
       assert.ok(bands[0].maxMs < bands[1].maxMs, 'excellent < perfect at ' + l);
       assert.ok(bands[1].maxMs < bands[2].maxMs, 'perfect < good at ' + l);
-      assert.ok(bands[2].maxMs <= cfg.waveMs(l, 1) || l >= 26, 'good reachable at ' + l);
+      assert.ok(bands[2].maxMs <= cfg.waveMs(l, 1) || l >= cfg.TIMER_FLOOR_LEVEL,
+        'good reachable at ' + l);
     }
   }
 });
 
 test('true/false bands are tighter than fill bands', () => {
-  assert.ok(cfg.ratingBands(1, 'tf')[0].maxMs < cfg.ratingBands(1, 'fill')[0].maxMs);
-  assert.strictEqual(cfg.rate(1, 2900, 'fill').id, 'excellent');
-  assert.strictEqual(cfg.rate(1, 2900, 'tf').id, 'perfect');
+  for (const l of [1, 20, 67]) {
+    const fill = cfg.ratingBands(l, 'fill');
+    const tf = cfg.ratingBands(l, 'tf');
+    for (let i = 0; i < fill.length; i++) {
+      assert.ok(tf[i].maxMs < fill[i].maxMs, tf[i].id + ' is stricter at level ' + l);
+    }
+  }
+  // a time that earns Exzellent on a typed answer but only Perfekt on one tap
+  const between = (cfg.ratingBands(1, 'tf')[0].maxMs + cfg.ratingBands(1, 'fill')[0].maxMs) / 2;
+  assert.strictEqual(cfg.rate(1, between, 'fill').id, 'excellent');
+  assert.strictEqual(cfg.rate(1, between, 'tf').id, 'perfect');
 });
 
 test('holding two formulas widens the rating limits for the first answered', () => {
@@ -61,30 +96,40 @@ test('holding two formulas widens the rating limits for the first answered', () 
   for (let i = 0; i < solo.length; i++) {
     assert.ok(pair[i].maxMs > solo[i].maxMs, pair[i].id + ' is more generous with two open');
   }
-  assert.strictEqual(cfg.rate(15, 8000, 'fill', 1).id, 'slow', 'harsh when only one is open');
-  assert.strictEqual(cfg.rate(15, 8000, 'fill', 2).id, 'good', 'fair while both are open');
+  // just past the Gut limit for a single card, so it would score nothing alone
+  const justTooSlow = cfg.ratingBands(15, 'fill', 1)[2].maxMs + 1;
+  assert.strictEqual(cfg.rate(15, justTooSlow, 'fill', 1).id, 'slow',
+    'harsh when only one is open');
+  assert.notStrictEqual(cfg.rate(15, justTooSlow, 'fill', 2).id, 'slow',
+    'fair while both are open');
   assert.deepStrictEqual(cfg.ratingBands(15, 'fill'), solo, 'one open is the default');
 });
 
 test('the first card of a pair is not charged for reading the second', () => {
+  const level = 15;
   const game = createGame({ rng: constRng(0.5) });
-  game.setLevel(15);
-  // Eight seconds to take in both formulas and answer the first.
-  game.advance(8000);
+  game.setLevel(level);
+  // Long enough that a single card would score nothing at all.
+  const reading = cfg.ratingBands(level, 'fill', 1)[2].maxMs + 500;
+  assert.strictEqual(cfg.rate(level, reading, 'fill', 1).id, 'slow',
+    'this long would be worthless on its own');
+  game.advance(reading);
   const first = solve(game).find((e) => e.type === 'answered');
-  assert.strictEqual(first.rating.id, 'good');
-  assert.ok(first.damage > 0, 'the first enemy takes damage too');
+  assert.notStrictEqual(first.rating.id, 'slow', 'but not while holding two formulas');
+  assert.ok(first.damage > 0, 'so the first enemy takes damage too');
   const second = solve(game).find((e) => e.type === 'answered');
   assert.strictEqual(second.rating.id, 'excellent', 'the second is rated on its own clock');
   assert.ok(game.state.enemies.every((e) => e.hp < e.maxHp), 'both enemies were hit');
 });
 
 test('rate maps think time to damage', () => {
-  assert.strictEqual(cfg.rate(1, 500).damage, 3);
-  assert.strictEqual(cfg.rate(1, 5000).damage, 2);
-  assert.strictEqual(cfg.rate(1, 10000).damage, 1);
-  assert.strictEqual(cfg.rate(1, 25000).damage, 0);
-  assert.strictEqual(cfg.rate(1, 25000).id, 'slow');
+  const bands = cfg.ratingBands(1, 'fill');
+  assert.strictEqual(cfg.rate(1, 0).damage, 3, 'instant is Exzellent');
+  assert.strictEqual(cfg.rate(1, bands[0].maxMs - 1).damage, 3);
+  assert.strictEqual(cfg.rate(1, bands[0].maxMs + 1).damage, 2, 'just over is Perfekt');
+  assert.strictEqual(cfg.rate(1, bands[1].maxMs + 1).damage, 1, 'then Gut');
+  assert.strictEqual(cfg.rate(1, bands[2].maxMs + 1).damage, 0, 'then nothing');
+  assert.strictEqual(cfg.rate(1, bands[2].maxMs + 1).id, 'slow');
 });
 
 test('enemy count and hp follow the level rules', () => {
@@ -118,8 +163,10 @@ test('every region ends on its own boss level', () => {
 });
 
 test('wave time scales for two questions', () => {
-  assert.strictEqual(cfg.waveMs(1, 1), 30000);
-  assert.strictEqual(cfg.waveMs(1, 2), 52500);
+  assert.strictEqual(cfg.waveMs(1, 1), cfg.TIMER_START_MS);
+  assert.strictEqual(cfg.waveMs(1, 2),
+    Math.round(cfg.TIMER_START_MS * cfg.PAIR_TIMER_FACTOR));
+  for (let l = 1; l <= 100; l++) assert.ok(cfg.waveMs(l, 2) > cfg.waveMs(l, 1));
 });
 
 // ---------------------------------------------------------------- biomes
@@ -419,7 +466,8 @@ test('a fast correct answer deals 3 damage, a slow one deals none', () => {
 
   const slowGame = createGame({ rng: constRng(0.5) });
   slowGame.start();
-  slowGame.advance(20000);
+  // past the Gut limit, but still inside the wave, so it is correct and free
+  slowGame.advance(cfg.ratingBands(1, 'fill')[2].maxMs + 500);
   const hpBefore = slowGame.state.enemies[0].hp;
   const slowEvents = solve(slowGame);
   const answered = slowEvents.find((e) => e.type === 'answered');
@@ -604,7 +652,8 @@ test('a dead enemy drops out and later waves are single questions', () => {
     const other = game.state.questions.findIndex((q) => !q.done);
     if (other !== -1) {
       game.focusQuestion(other);
-      game.advance(9000);          // slow on purpose: correct, but no damage
+      // Slow on purpose: correct, but past the Gut limit so it deals no damage.
+      game.advance(cfg.ratingBands(15, 'fill', 1)[2].maxMs + 500);
       solve(game);
     }
   }

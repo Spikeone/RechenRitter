@@ -23,8 +23,11 @@ dependencies, no framework. It is a static site, so GitHub Pages serves it as is
   **solution card** shows the complete formula and waits for *Weiter*, so there is
   time to read the right answer. At 0 lives the run ends and starts again at level 1;
   best level, statistics and achievements are kept.
-- **Timer** — 30 s per wave at level 1, shrinking by 0.8 s per level down to a hard
-  floor of 10 s (reached at level 26). It freezes while the solution card is up.
+- **Timer** — a full minute per wave for the whole first region, so a beginner has
+  room to think. From level 7 it shortens by the same amount every level until it
+  reaches its floor of 10 s at level 67, the first level past the fixed tour. It
+  freezes while the solution card is up. The rating limits are fractions of that
+  timer, so Exzellent starts at a forgiving 6 s and tightens to 2.5 s along with it.
 - **Levels** — beating an enemy raises the level and the next enemy has more health.
   Each enemy's bar shows its remaining hit points as a number.
   The last level of every region is a single tougher **boss**. From level 15 two enemies appear at

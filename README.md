@@ -207,5 +207,25 @@ full-screen app and works offline.
 ### Release ritual
 
 The service worker precaches everything, so **after every change bump `CACHE` in
-`sw.js`** (`rechenritter-v1` → `-v2`) before committing. Without the bump, browsers
-that already visited keep serving the old version.
+`sw.js`** (`rechenritter-v9` → `-v10`) before committing. Without the bump,
+browsers that already visited keep serving the old version.
+
+### How an update reaches a phone
+
+Push, wait for the Pages build, then open the game and let it sit on the start
+screen for a moment. The sequence is:
+
+1. Opening the app serves the old files instantly from the worker's cache, and in
+   the background the browser re-fetches `sw.js`. That file is never taken from
+   the HTTP cache, so the bumped `CACHE` is noticed straight away.
+2. The new worker installs, precaches everything with `cache: 'reload'` so
+   GitHub Pages' ten-minute `max-age` cannot poison it, then claims the page.
+3. The page reloads itself, and that reload shows the new version.
+
+Step 3 waits if a game is in progress and happens on the way back to the menu, so
+an update never lands in the middle of a question. The run is saved continuously
+and comes back on *Weiter spielen*.
+
+If it ever seems stuck, reloading twice does the same thing by hand. On iOS a
+home-screen app has to be closed from the app switcher rather than just
+backgrounded.

@@ -39,6 +39,8 @@ let returnOverlay = 'overlay-start';
 // old in-memory state straight back over the reset.
 let persistDisabled = false;
 let lastDayCheck = 0;
+// A newer version has been fetched and is waiting for a quiet moment.
+let updateReady = false;
 
 const now = () => (window.performance ? performance.now() : Date.now());
 const locked = () => now() < inputLockUntil;
@@ -391,7 +393,20 @@ function toMenu() {
   showStartScreen();
 }
 
+// Reloading is how the new version actually reaches the screen. The run is
+// saved continuously, so it comes back on "Weiter spielen".
+function applyUpdate() {
+  persistRun();
+  persistStats(true);
+  persistDaily();
+  location.reload();
+}
+
+const isPlaying = () => game.state.phase !== 'idle' && game.state.phase !== 'over';
+
 function showStartScreen() {
+  // Back at the menu is the moment to take a waiting update.
+  if (updateReady) { applyUpdate(); return; }
   refreshDay();
   ui.renderStartScreen(storage.loadRun(), stats, settings.skin);
   ui.renderDaily(daily, familiars);
@@ -618,6 +633,18 @@ function boot() {
   // development — so it is only installed on the deployed site.
   const isLocal = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
   if ('serviceWorker' in navigator && location.protocol.indexOf('http') === 0 && !isLocal) {
+    // A new worker claims the page as soon as it installs, but the document and
+    // its scripts in front of the player are still the old ones — without this
+    // the update only shows on a second reload. Taking it automatically means
+    // one reload is enough, and waiting for the menu means it never happens
+    // mid-question.
+    const hadWorker = !!navigator.serviceWorker.controller;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      // A first install has nothing to replace, so there is nothing to reload.
+      if (!hadWorker || updateReady) return;
+      updateReady = true;
+      if (!isPlaying()) applyUpdate();
+    });
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js').catch(() => {});
     });

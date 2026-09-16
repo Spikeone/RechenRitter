@@ -10,7 +10,7 @@ import {
   FAMILIARS, FAMILIAR_COLS, FAMILIAR_ROWS, SEASON, FAMILIAR_COUNT,
   isUnlocked, ownedCount,
 } from './familiars.js';
-import { questById, progressOf, progressText, isComplete, isClaimable } from './daily.js';
+import { QUEST, progressOf, progressText, isComplete, isClaimable } from './daily.js';
 import * as stats from './stats.js';
 
 const $ = (id) => document.getElementById(id);
@@ -579,8 +579,6 @@ export function createUi(callbacks) {
   // ---------------- settings ----------------
   // ---------------- daily quest ----------------
   function renderDaily(daily, familiarsOwned) {
-    const quest = questById(daily.questId);
-    if (!quest) return;
     const claimable = isClaimable(daily);
     const done = isComplete(daily);
     const all = ownedCount(familiarsOwned) >= FAMILIAR_COUNT;
@@ -588,9 +586,9 @@ export function createUi(callbacks) {
     els.dailyCard.classList.toggle('claimable', claimable);
     if (claimable) els.dailyTitle.textContent = LABELS.dailyClaim;
     else if (done) els.dailyTitle.textContent = all ? LABELS.dailyAllCollected : LABELS.dailyDone;
-    else els.dailyTitle.textContent = quest.title;
+    else els.dailyTitle.textContent = QUEST.title;
     els.dailyCount.textContent = claimable ? '🎁' : (done ? '✓' : progressText(daily));
-    const ratio = quest.target > 0 ? progressOf(daily) / quest.target : 0;
+    const ratio = QUEST.target > 0 ? progressOf(daily) / QUEST.target : 0;
     els.dailyFill.style.transform = 'scaleX(' + Math.min(1, ratio) + ')';
   }
 

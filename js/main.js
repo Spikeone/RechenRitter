@@ -189,7 +189,7 @@ function dispatch(events) {
   if (!events || events.length === 0) return;
   for (const ev of events) {
     statsLib.recordEvent(stats, ev, game.state);
-    dailyLib.recordEvent(daily, ev, game.state);
+    dailyLib.recordEvent(daily, ev);
     switch (ev.type) {
       case 'gameStarted':
         ui.renderHud(game.state);
@@ -316,7 +316,6 @@ function step(timestamp) {
   if (elapsed === 0) return;
 
   statsLib.addPlayTime(stats, elapsed, statsLib.dayKey());
-  dailyLib.addPlayTime(daily, elapsed);
   dispatch(game.advance(elapsed));
   announceDailyDone();
   ui.renderTimer(game.state, settings);
@@ -640,8 +639,7 @@ function boot() {
       // finish today's goal on the spot, to see the reveal
       // Fills today's goal but leaves it to be handed in from the menu.
       finishDaily() {
-        const quest = dailyLib.questById(daily.questId);
-        daily.counters[quest.track] = quest.target;
+        daily.correct = dailyLib.QUEST.target;
         persistDaily();
         ui.renderDaily(daily, familiars);
         announceDailyDone();

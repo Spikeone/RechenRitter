@@ -46,12 +46,14 @@ dependencies, no framework. It is a static site, so GitHub Pages serves it as is
 - **Adaptive questions** — a fact answered wrong or slowly becomes up to three times
   as likely to come back, and a fact just missed returns within the next few
   questions. Unknown facts stay neutral, so the game never feels like drilling.
-- **Tagesaufgabe** — one goal a day, picked from a pool of twelve by the date, so
-  it is the same goal however often the page is reloaded. Progress shows on the
-  start screen. Finishing it does not interrupt the fight: it only says so with a
-  small notice, and the card in the menu turns into a glowing *Belohnung abholen!*
-  button. Handing it in plays the reveal and adds one **Gefährte** to the
-  collection, once per day.
+- **Tagesaufgabe** — one goal, the same every day for the whole season: in
+  Saison 1, answer 30 questions correctly. Only correct answers count, a wrong one
+  already costs a life. Progress shows on the start screen. Finishing it does not
+  interrupt the fight: it only says so with a small notice, and the card in the
+  menu turns into a glowing *Belohnung abholen!* button. Handing it in plays the
+  reveal and adds one **Gefährte** to the collection, once per day. The goal is a
+  property of the season in `js/familiars.js`, so a later season brings its own
+  along with its own creatures.
 - **Pause** hides the formula and deals a new one on resume, so it cannot be used to
   think for free. The run is saved continuously — closing the tab and coming back
   offers *Weiter spielen*.
@@ -75,7 +77,7 @@ dependencies, no framework. It is a static site, so GitHub Pages serves it as is
   Useful for a parent checking how much it actually gets used.
 - **Erfolge** — 32 achievements. Nine of them unlock a new character.
 - **Sammlung** — Saison 1, *Die Glasgefährten*: 28 creatures in jars, one a day
-  from the daily quest. A creature already found shows its jar and its name; one
+  from the daily quest, so the season runs four weeks. A creature already found shows its jar and its name; one
   still missing shows only a black jar and `???`. Every jar in the pack has the
   same outline and the artwork has no partial transparency, so the silhouette is
   simply the artwork painted black and gives nothing away.

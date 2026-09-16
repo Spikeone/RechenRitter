@@ -11,10 +11,13 @@ export const FAMILIAR_H = 84;
 export const FAMILIAR_COLS = 7;
 export const FAMILIAR_ROWS = 4;
 
+// A season is a collection plus the one daily goal that fills it. Season 2 would
+// bring its own creatures and its own goal.
 export const SEASON = {
   id: 1,
   name: 'Saison 1',
   title: 'Die Glasgefährten',
+  quest: { target: 30, title: '30 richtige Antworten' },
 };
 
 // Order is the sheet order, left to right, top to bottom.

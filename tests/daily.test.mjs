@@ -57,177 +57,96 @@ test('an extreme rng roll still lands inside the list', () => {
 
 // ---------------------------------------------------------------- the quest
 
-test('every quest is well formed and watches a real counter', () => {
-  const counters = daily.emptyCounters();
-  const ids = new Set();
-  for (const q of daily.QUESTS) {
-    assert.ok(q.id && q.title, 'id and German title');
-    assert.ok(!ids.has(q.id), 'duplicate quest ' + q.id);
-    ids.add(q.id);
-    assert.ok(q.target > 0, q.id + ' has a target');
-    assert.ok(Object.prototype.hasOwnProperty.call(counters, q.track),
-      q.id + ' tracks a counter that exists: ' + q.track);
-    assert.strictEqual(daily.questById(q.id), q);
-  }
-  assert.ok(daily.QUESTS.length >= 8, 'enough variety not to repeat every other day');
+test('the season sets one goal and keeps it', () => {
+  assert.strictEqual(daily.QUEST, SEASON.quest, 'the quest belongs to the season');
+  assert.ok(daily.QUEST.target > 0, 'it has a target');
+  assert.ok(daily.QUEST.title, 'and a German title');
+  assert.ok(daily.QUEST.title.indexOf(String(daily.QUEST.target)) !== -1,
+    'the title names the number it asks for');
 });
 
-test('the day decides the quest, so everyone asking gets the same answer', () => {
-  for (const key of ['2026-09-16', '2026-01-01', '2027-12-31']) {
-    const first = daily.questForDay(key);
-    for (let n = 0; n < 20; n++) assert.strictEqual(daily.questForDay(key), first, key);
-  }
-  // and it does move around across a month
-  const seen = new Set();
-  for (let d = 1; d <= 31; d++) {
-    seen.add(daily.questForDay('2026-03-' + (d < 10 ? '0' + d : d)).id);
-  }
-  assert.ok(seen.size >= 5, 'a month brings a decent spread, got ' + seen.size);
-});
-
-test('a new day clears the counters and brings a new goal', () => {
+test('a new day clears the count and can be claimed again', () => {
   const yesterday = daily.emptyDaily('2026-09-15');
-  yesterday.counters.correct = 40;
+  yesterday.correct = daily.QUEST.target;
   yesterday.claimed = true;
+  yesterday.announced = true;
   yesterday.reward = 'frog';
 
   const kept = daily.normalize(yesterday, '2026-09-15');
-  assert.strictEqual(kept.counters.correct, 40, 'same day keeps its progress');
+  assert.strictEqual(kept.correct, daily.QUEST.target, 'the same day keeps its progress');
   assert.strictEqual(kept.claimed, true);
+  assert.strictEqual(kept.reward, 'frog');
 
   const today = daily.normalize(yesterday, '2026-09-16');
   assert.strictEqual(today.day, '2026-09-16');
-  assert.strictEqual(today.counters.correct, 0, 'a new day starts from zero');
-  assert.strictEqual(today.claimed, false, 'and can be claimed again');
-  assert.strictEqual(today.questId, daily.questForDay('2026-09-16').id);
+  assert.strictEqual(today.correct, 0, 'a new day starts from zero');
+  assert.strictEqual(today.claimed, false, 'and is worth another familiar');
+  assert.strictEqual(today.announced, false);
+  assert.strictEqual(today.reward, null);
 });
 
 test('normalize survives missing and corrupt stored data', () => {
-  for (const bad of [null, undefined, 'nonsense', 42, [], { day: '2026-09-16', counters: 'x' }]) {
+  for (const bad of [null, undefined, 'nonsense', 42, [], { day: '2026-09-16', correct: 'x' }]) {
     const d = daily.normalize(bad, '2026-09-16');
     assert.strictEqual(d.day, '2026-09-16');
-    assert.ok(daily.questById(d.questId), 'always ends up with a real quest');
-    assert.strictEqual(d.counters.correct, 0);
+    assert.strictEqual(d.correct, 0);
+    assert.strictEqual(d.claimed, false);
   }
-  const negative = daily.normalize(
-    { day: '2026-09-16', questId: 'correct-40', counters: { correct: -5, excellent: 3 } },
-    '2026-09-16');
-  assert.strictEqual(negative.counters.correct, 0, 'a negative count is dropped');
-  assert.strictEqual(negative.counters.excellent, 3);
+  const negative = daily.normalize({ day: '2026-09-16', correct: -5 }, '2026-09-16');
+  assert.strictEqual(negative.correct, 0, 'a negative count is dropped');
 });
 
-test('answers, kills and levels move the right counters', () => {
-  const d = daily.emptyDaily('2026-09-16');
-  const state = { level: 4, streakExcellent: 3 };
-  daily.recordEvent(d, {
-    type: 'answered', correct: true, question: { kind: 'fill' },
-    rating: { id: 'excellent' },
-  }, state);
-  assert.strictEqual(d.counters.correct, 1);
-  assert.strictEqual(d.counters.excellent, 1);
-  assert.strictEqual(d.counters.bestStreak, 3);
-  assert.strictEqual(d.counters.tfCorrect, 0);
-
-  daily.recordEvent(d, {
-    type: 'answered', correct: true, question: { kind: 'tf' }, rating: { id: 'good' },
-  }, state);
-  assert.strictEqual(d.counters.tfCorrect, 1);
-  assert.strictEqual(d.counters.excellent, 1, 'good is not excellent');
-
-  daily.recordEvent(d, { type: 'answered', correct: false, question: { kind: 'fill' } }, state);
-  assert.strictEqual(d.counters.correct, 2, 'a wrong answer counts for nothing');
-
-  daily.recordEvent(d, { type: 'enemyDefeated', enemy: { boss: false } }, state);
-  daily.recordEvent(d, { type: 'enemyDefeated', enemy: { boss: true } }, state);
-  assert.strictEqual(d.counters.defeated, 2);
-  assert.strictEqual(d.counters.bosses, 1);
-
-  daily.recordEvent(d, { type: 'levelUp' }, { level: 9, streakExcellent: 0 });
-  assert.strictEqual(d.counters.bestLevel, 9);
-  daily.recordEvent(d, { type: 'levelUp' }, { level: 2, streakExcellent: 0 });
-  assert.strictEqual(d.counters.bestLevel, 9, 'the best of the day, not the latest');
-
-  daily.recordEvent(d, { type: 'gameStarted' }, state);
-  assert.strictEqual(d.counters.games, 1);
-
-  daily.addPlayTime(d, 4000);
-  daily.addPlayTime(d, -10);
-  assert.strictEqual(d.counters.playMs, 4000);
+test('a day saved by the older rotating version keeps its progress', () => {
+  const v1 = {
+    v: 1, day: '2026-09-16', questId: 'excellent-30',
+    counters: { correct: 12, excellent: 4 }, claimed: false,
+  };
+  const migrated = daily.normalize(v1, '2026-09-16');
+  assert.strictEqual(migrated.correct, 12, 'the correct answers carry over');
+  assert.strictEqual(migrated.v, 2);
 });
 
-test('progress caps at the target and reads as text', () => {
+test('only correct answers count towards the day', () => {
   const d = daily.emptyDaily('2026-09-16');
-  const quest = daily.questById(d.questId);
-  assert.strictEqual(daily.progressOf(d), 0);
-  assert.ok(!daily.isComplete(d));
+  daily.recordEvent(d, { type: 'answered', correct: true });
+  daily.recordEvent(d, { type: 'answered', correct: true });
+  assert.strictEqual(d.correct, 2);
 
-  d.counters[quest.track] = quest.target - 1;
+  daily.recordEvent(d, { type: 'answered', correct: false });
+  assert.strictEqual(d.correct, 2, 'a wrong answer counts for nothing');
+
+  for (const other of ['enemyDefeated', 'levelUp', 'gameStarted', 'timeout', 'dealt']) {
+    daily.recordEvent(d, { type: other });
+  }
+  assert.strictEqual(d.correct, 2, 'and neither does anything else');
+});
+
+test('the goal completes exactly on target and the bar never overfills', () => {
+  const d = daily.emptyDaily('2026-09-16');
+  for (let i = 0; i < daily.QUEST.target - 1; i++) {
+    daily.recordEvent(d, { type: 'answered', correct: true });
+  }
   assert.ok(!daily.isComplete(d), 'one short is not done');
+  assert.ok(!daily.isClaimable(d));
+  assert.strictEqual(daily.progressText(d),
+    (daily.QUEST.target - 1) + ' / ' + daily.QUEST.target);
 
-  d.counters[quest.track] = quest.target * 3;
-  assert.ok(daily.isComplete(d));
-  assert.strictEqual(daily.progressOf(d), quest.target, 'the bar never overfills');
+  daily.recordEvent(d, { type: 'answered', correct: true });
+  assert.ok(daily.isComplete(d), 'the target finishes it');
+  assert.ok(daily.isClaimable(d), 'and it is waiting to be handed in');
+
+  for (let i = 0; i < 50; i++) daily.recordEvent(d, { type: 'answered', correct: true });
+  assert.strictEqual(daily.progressOf(d), daily.QUEST.target, 'the bar stops at the target');
+  assert.strictEqual(daily.progressText(d), daily.QUEST.target + ' / ' + daily.QUEST.target);
 });
 
-test('the timed quest reads as minutes and seconds', () => {
+test('a handed-in day is no longer claimable', () => {
   const d = daily.emptyDaily('2026-09-16');
-  d.questId = 'playtime-10';
-  d.counters.playMs = 6 * 60 * 1000 + 10 * 1000;
-  assert.strictEqual(daily.progressText(d), '6:10 / 10:00');
-  d.counters.playMs = 5 * 1000;
-  assert.strictEqual(daily.progressText(d), '0:05 / 10:00');
-});
-
-test('a counting quest reads as a plain fraction', () => {
-  const d = daily.emptyDaily('2026-09-16');
-  d.questId = 'correct-40';
-  d.counters.correct = 32;
-  assert.strictEqual(daily.progressText(d), '32 / 40');
-});
-
-test('every quest can actually be finished by playing', () => {
-  // Drives each quest's counter up the way the game would and checks it lands.
-  for (const quest of daily.QUESTS) {
-    const d = daily.emptyDaily('2026-09-16');
-    d.questId = quest.id;
-    const state = { level: 1, streakExcellent: 0 };
-    let guard = 0;
-    while (!daily.isComplete(d) && guard++ < 5000) {
-      switch (quest.track) {
-        case 'correct':
-        case 'excellent':
-        case 'tfCorrect':
-        case 'bestStreak':
-          state.streakExcellent += 1;
-          daily.recordEvent(d, {
-            type: 'answered', correct: true,
-            question: { kind: quest.track === 'tfCorrect' ? 'tf' : 'fill' },
-            rating: { id: 'excellent' },
-          }, state);
-          break;
-        case 'defeated':
-        case 'bosses':
-          daily.recordEvent(d, {
-            type: 'enemyDefeated', enemy: { boss: quest.track === 'bosses' },
-          }, state);
-          break;
-        case 'bestLevel':
-          state.level += 1;
-          daily.recordEvent(d, { type: 'levelUp' }, state);
-          break;
-        case 'games':
-          daily.recordEvent(d, { type: 'gameStarted' }, state);
-          break;
-        case 'playMs':
-          daily.addPlayTime(d, 1000);
-          break;
-        default:
-          throw new Error('no way to advance ' + quest.track);
-      }
-    }
-    assert.ok(daily.isComplete(d), quest.id + ' is reachable');
-    assert.ok(guard < 5000, quest.id + ' does not take absurdly long');
-  }
+  d.correct = daily.QUEST.target;
+  assert.ok(daily.isClaimable(d));
+  d.claimed = true;
+  assert.ok(daily.isComplete(d), 'still done');
+  assert.ok(!daily.isClaimable(d), 'but not a second time');
 });
 
 // ---------------------------------------------------------------- report

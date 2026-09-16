@@ -89,9 +89,18 @@
           <span>Weiter spielen</span><small id="continue-info"></small>
         </button>
         <button class="big-btn" id="btn-new">Neues Spiel</button>
+        <button class="daily-card" id="daily-card">
+          <div class="daily-head">
+            <span class="daily-label">Tagesaufgabe</span>
+            <span class="daily-count" id="daily-count"></span>
+          </div>
+          <div class="daily-title" id="daily-title"></div>
+          <div class="daily-bar"><div class="daily-fill" id="daily-fill"></div></div>
+        </button>
         <div class="menu-row">
           <button class="menu-btn" id="btn-stats">📊<span>Statistik</span></button>
           <button class="menu-btn" id="btn-achievements">🏆<span>Erfolge</span></button>
+          <button class="menu-btn" id="btn-familiars">🐾<span>Sammlung</span></button>
           <button class="menu-btn" id="btn-settings">⚙️<span>Einstellungen</span></button>
         </div>
         <p class="hint" id="start-best"></p>
@@ -141,6 +150,16 @@
         <p class="hint small" id="achievement-count"></p>
         <div id="achievement-list"></div>
         <button class="big-btn" data-close="overlay-achievements">Zurück</button>
+      </div>
+    </div>
+
+    <div class="overlay hidden scroll" id="overlay-familiars">
+      <div class="card wide">
+        <h2>Sammlung</h2>
+        <p class="hint small" id="season-line"></p>
+        <div id="familiar-grid"></div>
+        <p class="fact-detail" id="familiar-detail">&nbsp;</p>
+        <button class="big-btn" data-close="overlay-familiars">Zurück</button>
       </div>
     </div>
 
@@ -195,6 +214,19 @@
           Grafiken: 32rogues (Seth Boyles) · Rifts of the Nine Realms (Ronin Lab Studio)
         </p>
         <button class="big-btn" data-close="overlay-settings">Zurück</button>
+      </div>
+    </div>
+
+    <!-- The daily reward reveal. Sits above every overlay and is dismissed by a
+         tap anywhere on it. -->
+    <div id="loot" class="hidden">
+      <div id="loot-rays"></div>
+      <div id="loot-burst"></div>
+      <div id="loot-stage">
+        <div id="loot-title">Neuer Gefährte!</div>
+        <div id="loot-jar"></div>
+        <div id="loot-name"></div>
+        <div id="loot-hint">Tippen zum Weitermachen</div>
       </div>
     </div>
 

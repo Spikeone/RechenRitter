@@ -172,7 +172,21 @@ export const LABELS = {
   statsCodeCancel: 'Abbrechen',
   statsCleared: 'Statistik gelöscht.',
   confirmAgain: 'Wirklich? Nochmal tippen.',
-  credits: 'Grafiken: 32rogues (Seth Boyles) · Rifts of the Nine Realms (Ronin Lab Studio)',
+  credits: 'Grafiken: 32rogues (Seth Boyles) · Rifts of the Nine Realms (Ronin Lab Studio) · Jar Familiars (blaukeks)',
+  // daily quest and the collection
+  familiars: 'Sammlung',
+  dailyQuest: 'Tagesaufgabe',
+  dailyDone: 'Heute geschafft!',
+  dailyClaim: 'Belohnung abholen!',
+  dailyReadyTitle: 'Tagesaufgabe geschafft!',
+  dailyReadyDesc: 'Hol dir deine Belohnung im Menü ab.',
+  dailyReward: 'Belohnung: ein neuer Gefährte',
+  dailyAllCollected: 'Alle Gefährten gesammelt!',
+  lootTitle: 'Neuer Gefährte!',
+  lootTap: 'Tippen zum Weitermachen',
+  collectionCount: '{owned} von {total} gesammelt',
+  familiarLocked: 'Noch nicht gefunden',
+  newToday: 'Neu',
 };
 
 export function label(key, vars) {

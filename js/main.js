@@ -13,11 +13,15 @@ import * as music from './music.js';
 import * as fx from './fx.js';
 import { preloadSheets } from './sprites.js';
 import { ACHIEVEMENTS, checkAchievements, achievementById, unlockedSkins } from './achievements.js';
+import * as dailyLib from './daily.js';
+import { drawFamiliar, familiarById, FAMILIARS } from './familiars.js';
 import { DEFAULT_SKIN, PLAYERS } from '../assets/sprites/manifest.js';
 
 let settings = storage.loadSettings();
 let stats = storage.loadStats();
 let unlocked = storage.loadAchievements();
+let daily = dailyLib.normalize(storage.loadDailyRaw(), statsLib.dayKey());
+let familiars = storage.loadFamiliars();
 let picker = createPicker({ stats });
 let game = createGame({
   rng: Math.random, picker, skin: settings.skin,
@@ -49,6 +53,11 @@ function persistRun() {
   storage.saveRun(snap);
 }
 
+function persistDaily() {
+  if (persistDisabled) return;
+  storage.saveDaily(daily);
+}
+
 function persistStats(force) {
   if (persistDisabled) return;
   const t = now();
@@ -74,6 +83,53 @@ function unlockAchievements(event) {
     audio.playSfx('achievement');
   }
   storage.saveAchievements(unlocked);
+}
+
+// Rolls the day over if the app was left open past midnight.
+function refreshDay() {
+  const today = statsLib.dayKey();
+  if (daily.day === today) return false;
+  daily = dailyLib.emptyDaily(today);
+  persistDaily();
+  return true;
+}
+
+// Says once, quietly, that the goal is met. The reward itself is fetched from
+// the menu, so a full-screen reveal never lands in the middle of a fight.
+function announceDailyDone() {
+  if (daily.announced || !dailyLib.isClaimable(daily)) return;
+  daily.announced = true;
+  persistDaily();
+  audio.playSfx('achievement');
+  fx.toast({ icon: '🎁', title: LABELS.dailyReadyTitle, desc: LABELS.dailyReadyDesc });
+}
+
+// Hand in the day's goal for one familiar that is still missing, with the full
+// reveal. Only ever once per day, because `claimed` is part of the day.
+function claimDailyReward() {
+  if (daily.claimed || !dailyLib.isComplete(daily)) return;
+  daily.claimed = true;
+  const prize = drawFamiliar(familiars, Math.random);
+  if (prize) {
+    familiars[prize.id] = new Date().toISOString();
+    daily.reward = prize.id;
+    storage.saveFamiliars(familiars);
+  }
+  persistDaily();
+
+  if (!prize) {
+    // Nothing left to give — say so rather than opening an empty reveal.
+    audio.playSfx('achievement');
+    fx.toast({ icon: '🐾', title: LABELS.dailyDone, desc: LABELS.dailyAllCollected });
+    ui.renderDaily(daily, familiars);
+    return;
+  }
+  audio.playSfx('levelUp');
+  music.setDucked(true);
+  ui.showLoot(prize, () => {
+    music.setDucked(game.state.phase !== 'running');
+    ui.renderDaily(daily, familiars);
+  });
 }
 
 function onAnswered(ev) {
@@ -133,6 +189,7 @@ function dispatch(events) {
   if (!events || events.length === 0) return;
   for (const ev of events) {
     statsLib.recordEvent(stats, ev, game.state);
+    dailyLib.recordEvent(daily, ev, game.state);
     switch (ev.type) {
       case 'gameStarted':
         ui.renderHud(game.state);
@@ -221,10 +278,12 @@ function dispatch(events) {
     unlockAchievements(ev);
   }
 
-  if (game.state.phase === 'running') music.setDucked(false);
+  if (game.state.phase === 'running' && !ui.isLootOpen()) music.setDucked(false);
   if (game.state.phase === 'over') storage.clearRun();
   else persistRun();
   persistStats(false);
+  persistDaily();
+  announceDailyDone();
 }
 
 function onGameOver() {
@@ -246,12 +305,20 @@ function step(timestamp) {
     lastFrame = timestamp;
     return;
   }
+  // The reward reveal covers the screen, so the wave clock has to stop with it —
+  // otherwise a life is lost to watching the animation.
+  if (ui.isLootOpen()) {
+    lastFrame = timestamp;
+    return;
+  }
   const elapsed = Math.min(1000, Math.max(0, timestamp - lastFrame));
   lastFrame = timestamp;
   if (elapsed === 0) return;
 
   statsLib.addPlayTime(stats, elapsed, statsLib.dayKey());
+  dailyLib.addPlayTime(daily, elapsed);
   dispatch(game.advance(elapsed));
+  announceDailyDone();
   ui.renderTimer(game.state, settings);
 
   // A short warning tick when the wave is nearly over.
@@ -313,7 +380,13 @@ function toMenu() {
   }
   persistStats(true);
   music.setDucked(true);
+  showStartScreen();
+}
+
+function showStartScreen() {
+  refreshDay();
   ui.renderStartScreen(storage.loadRun(), stats, settings.skin);
+  ui.renderDaily(daily, familiars);
   ui.showOverlay('overlay-start');
 }
 
@@ -407,6 +480,7 @@ const callbacks = {
     returnOverlay = $isPauseOpen() ? 'overlay-pause' : 'overlay-start';
     if (overlayId === 'overlay-stats') ui.renderStats(stats);
     if (overlayId === 'overlay-achievements') ui.renderAchievements(unlocked);
+    if (overlayId === 'overlay-familiars') ui.renderFamiliars(familiars, daily.reward);
     if (overlayId === 'overlay-settings') {
       ui.renderSettings(settings, unlockedSkins(unlocked, DEFAULT_SKIN));
     }
@@ -414,10 +488,11 @@ const callbacks = {
   },
   onClose() {
     if (returnOverlay === 'overlay-pause') ui.showOverlay('overlay-pause');
-    else {
-      ui.renderStartScreen(storage.loadRun(), stats, settings.skin);
-      ui.showOverlay('overlay-start');
-    }
+    else showStartScreen();
+  },
+  onClaimDaily() {
+    startAudio();
+    claimDailyReward();
   },
   onSetting(key, value) {
     settings[key] = value;
@@ -448,6 +523,7 @@ const callbacks = {
         allowMissingFactor: settings.missingFactor !== false,
       });
       ui.renderStartScreen(null, stats, settings.skin);
+      ui.renderDaily(daily, familiars);
       ui.showOverlay('overlay-start');
     });
   },
@@ -463,6 +539,9 @@ const callbacks = {
     stats = storage.resetStats();
     unlocked = {};
     storage.saveAchievements(unlocked);
+    familiars = storage.resetFamiliars();
+    daily = dailyLib.emptyDaily(statsLib.dayKey());
+    persistDaily();
     picker = createPicker({ stats });
     // The achievements go with the statistics, so every other figure is locked
     // again — the chosen one has to come back to the starting knight with them.
@@ -495,8 +574,7 @@ function boot() {
   ui.renderPlayer(settings.skin);
   ui.renderBackground(1, true);
   ui.renderTimer(game.state, settings);
-  ui.renderStartScreen(storage.loadRun(), stats, settings.skin);
-  ui.showOverlay('overlay-start');
+  showStartScreen();
 
   preloadSheets().then(() => {
     // Redraw once the sheets are known, so placeholders are replaced.
@@ -519,6 +597,7 @@ function boot() {
       }
     } else {
       lastFrame = now();
+      if (refreshDay()) ui.renderDaily(daily, familiars);
     }
   });
 
@@ -556,6 +635,25 @@ function boot() {
         ui.renderSettings(settings, unlockedSkins(unlocked, DEFAULT_SKIN));
       },
       achievements: ACHIEVEMENTS,
+      get daily() { return daily; },
+      get familiars() { return familiars; },
+      // finish today's goal on the spot, to see the reveal
+      // Fills today's goal but leaves it to be handed in from the menu.
+      finishDaily() {
+        const quest = dailyLib.questById(daily.questId);
+        daily.counters[quest.track] = quest.target;
+        persistDaily();
+        ui.renderDaily(daily, familiars);
+        announceDailyDone();
+      },
+      claimDaily() { claimDailyReward(); },
+      lockFamiliars() {
+        familiars = {};
+        storage.saveFamiliars(familiars);
+        daily.claimed = false;
+        daily.reward = null;
+        persistDaily();
+      },
       resetAll() {
         persistDisabled = true;
         storage.resetAll();

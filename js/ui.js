@@ -6,13 +6,26 @@ import { biomeFor, backgroundFor } from './biomes.js';
 import { createSprite, displayName } from './sprites.js';
 import { PLAYERS, PLAYER_ORDER, DEFAULT_SKIN } from '../assets/sprites/manifest.js';
 import { ACHIEVEMENTS, skinRewards } from './achievements.js';
+import {
+  FAMILIARS, FAMILIAR_COLS, FAMILIAR_ROWS, SEASON, FAMILIAR_COUNT,
+  isUnlocked, ownedCount,
+} from './familiars.js';
+import { questById, progressOf, progressText, isComplete, isClaimable } from './daily.js';
 import * as stats from './stats.js';
 
 const $ = (id) => document.getElementById(id);
 const MULT = '·';
 
 const OVERLAYS = ['overlay-start', 'overlay-pause', 'overlay-gameover',
-  'overlay-stats', 'overlay-achievements', 'overlay-settings'];
+  'overlay-stats', 'overlay-achievements', 'overlay-familiars', 'overlay-settings'];
+
+// One sheet holds every jar, so a cell is addressed the way a CSS sprite is:
+// the background is blown up to the full grid and shifted to the wanted cell.
+function jarPosition(el, familiar) {
+  const x = FAMILIAR_COLS > 1 ? (familiar.col / (FAMILIAR_COLS - 1)) * 100 : 0;
+  const y = FAMILIAR_ROWS > 1 ? (familiar.row / (FAMILIAR_ROWS - 1)) * 100 : 0;
+  el.style.backgroundPosition = x + '% ' + y + '%';
+}
 
 function formatDuration(ms) {
   const total = Math.floor(ms / 1000);
@@ -54,6 +67,16 @@ export function createUi(callbacks) {
     numpad: $('numpad'),
     boolpad: $('boolpad'),
     factDetail: $('fact-detail'),
+    dailyCard: $('daily-card'),
+    dailyTitle: $('daily-title'),
+    dailyCount: $('daily-count'),
+    dailyFill: $('daily-fill'),
+    familiarGrid: $('familiar-grid'),
+    familiarDetail: $('familiar-detail'),
+    seasonLine: $('season-line'),
+    loot: $('loot'),
+    lootJar: $('loot-jar'),
+    lootName: $('loot-name'),
     statsLock: $('stats-lock'),
     statsCode: $('stats-code'),
     statsLockMsg: $('stats-lock-msg'),
@@ -554,6 +577,110 @@ export function createUi(callbacks) {
   }
 
   // ---------------- settings ----------------
+  // ---------------- daily quest ----------------
+  function renderDaily(daily, familiarsOwned) {
+    const quest = questById(daily.questId);
+    if (!quest) return;
+    const claimable = isClaimable(daily);
+    const done = isComplete(daily);
+    const all = ownedCount(familiarsOwned) >= FAMILIAR_COUNT;
+    els.dailyCard.classList.toggle('done', done && !claimable);
+    els.dailyCard.classList.toggle('claimable', claimable);
+    if (claimable) els.dailyTitle.textContent = LABELS.dailyClaim;
+    else if (done) els.dailyTitle.textContent = all ? LABELS.dailyAllCollected : LABELS.dailyDone;
+    else els.dailyTitle.textContent = quest.title;
+    els.dailyCount.textContent = claimable ? '🎁' : (done ? '✓' : progressText(daily));
+    const ratio = quest.target > 0 ? progressOf(daily) / quest.target : 0;
+    els.dailyFill.style.transform = 'scaleX(' + Math.min(1, ratio) + ')';
+  }
+
+  function pulseDaily() {
+    els.dailyCard.classList.remove('just-done');
+    void els.dailyCard.offsetWidth;
+    els.dailyCard.classList.add('just-done');
+    setTimeout(() => els.dailyCard.classList.remove('just-done'), 800);
+  }
+
+  // ---------------- the collection ----------------
+  function renderFamiliars(owned, freshId) {
+    els.seasonLine.textContent = SEASON.name + ' · ' + SEASON.title + ' — '
+      + label('collectionCount', { owned: ownedCount(owned), total: FAMILIAR_COUNT });
+    els.familiarGrid.innerHTML = '';
+    for (const familiar of FAMILIARS) {
+      const has = isUnlocked(owned, familiar.id);
+      const cell = document.createElement('div');
+      cell.className = 'familiar ' + (has ? 'owned' : 'locked')
+        + (has && familiar.id === freshId ? ' fresh' : '');
+
+      const jar = document.createElement('div');
+      jar.className = 'jar';
+      jarPosition(jar, familiar);
+
+      const name = document.createElement('div');
+      name.className = 'familiar-name';
+      // A locked jar stays nameless on purpose — the silhouette is the whole hint.
+      name.textContent = has ? familiar.name : '???';
+
+      cell.appendChild(jar);
+      cell.appendChild(name);
+      cell.addEventListener('click', () => {
+        els.familiarDetail.textContent = has
+          ? familiar.name + ' — ' + label('unlockedOn', { date: formatDate(owned[familiar.id]) })
+          : LABELS.familiarLocked;
+      });
+      els.familiarGrid.appendChild(cell);
+    }
+    els.familiarDetail.innerHTML = '&nbsp;';
+  }
+
+  // ---------------- the reward reveal ----------------
+  let lootDismiss = null;
+
+  function showLoot(familiar, onDismiss) {
+    jarPosition(els.lootJar, familiar);
+    els.lootName.textContent = familiar.name;
+    els.loot.classList.remove('hidden', 'pop');
+    void els.loot.offsetWidth;
+    els.loot.classList.add('pop');
+
+    // A burst of sparks thrown out from the middle, like a chest opening.
+    for (const old of els.loot.querySelectorAll('.spark')) old.remove();
+    const reduce = window.matchMedia
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!reduce) {
+      for (let i = 0; i < 26; i++) {
+        const spark = document.createElement('div');
+        spark.className = 'spark';
+        const angle = (Math.PI * 2 * i) / 26 + Math.random() * 0.3;
+        const dist = 90 + Math.random() * 190;
+        spark.style.setProperty('--dx', Math.cos(angle) * dist + 'px');
+        spark.style.setProperty('--dy', Math.sin(angle) * dist + 'px');
+        spark.style.setProperty('--c', i % 3 === 0 ? '#fff' : '#ffd45e');
+        spark.style.setProperty('--dur', 700 + Math.random() * 600 + 'ms');
+        spark.style.animationDelay = 380 + Math.random() * 120 + 'ms';
+        els.loot.appendChild(spark);
+      }
+    }
+    // Ignore taps during the reveal, or the animation is over before it is seen.
+    lootDismiss = null;
+    setTimeout(() => { lootDismiss = onDismiss || (() => {}); }, 1100);
+  }
+
+  function hideLoot() {
+    els.loot.classList.add('hidden');
+    els.loot.classList.remove('pop');
+    lootDismiss = null;
+  }
+
+  const isLootOpen = () => !els.loot.classList.contains('hidden');
+
+  els.loot.addEventListener('click', () => {
+    if (!lootDismiss) return;
+    const done = lootDismiss;
+    hideLoot();
+    done();
+  });
+
   // ---------------- statistics child lock ----------------
   function openStatsLock() {
     els.statsLock.classList.remove('hidden');
@@ -642,6 +769,13 @@ export function createUi(callbacks) {
   $('btn-new').addEventListener('click', () => cb.onNewGame());
   $('btn-stats').addEventListener('click', () => cb.onOpen('overlay-stats'));
   $('btn-achievements').addEventListener('click', () => cb.onOpen('overlay-achievements'));
+  $('btn-familiars').addEventListener('click', () => cb.onOpen('overlay-familiars'));
+  // A finished goal turns the card into the hand-in button; otherwise it is
+  // just the way into the collection.
+  els.dailyCard.addEventListener('click', () => {
+    if (els.dailyCard.classList.contains('claimable')) cb.onClaimDaily();
+    else cb.onOpen('overlay-familiars');
+  });
   $('btn-settings').addEventListener('click', () => cb.onOpen('overlay-settings'));
   $('btn-again').addEventListener('click', () => cb.onNewGame());
   $('btn-gameover-menu').addEventListener('click', () => cb.onMenu());
@@ -712,6 +846,12 @@ export function createUi(callbacks) {
     renderStats,
     renderAchievements,
     renderSettings,
+    renderDaily,
+    pulseDaily,
+    renderFamiliars,
+    showLoot,
+    hideLoot,
+    isLootOpen,
     openStatsLock,
     closeStatsLock,
     statsLockError,

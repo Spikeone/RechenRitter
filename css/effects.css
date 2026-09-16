@@ -290,6 +290,157 @@
   100% { opacity: 0; transform: translateY(-26px); }
 }
 
+/* ---------------- daily reward reveal ---------------- */
+/* Vampire Survivors style: the screen darkens, light rays spin up behind a jar
+   that lands with a thump, a ring of light snaps outward, then the name pops. */
+#loot {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: rgba(8, 6, 16, 0.92);
+  animation: loot-fade-in 260ms ease-out;
+}
+
+#loot-rays {
+  position: absolute;
+  width: 200vmax;
+  height: 200vmax;
+  left: 50%;
+  top: 50%;
+  margin: -100vmax 0 0 -100vmax;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(255, 212, 94, 0.22) 0deg 7deg,
+    rgba(255, 212, 94, 0) 7deg 20deg);
+  animation: loot-rays-spin 14s linear infinite, loot-rays-in 700ms ease-out;
+  pointer-events: none;
+}
+
+#loot-burst {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
+  border-radius: 50%;
+  border: 5px solid #fff;
+  opacity: 0;
+  pointer-events: none;
+}
+#loot.pop #loot-burst { animation: loot-ring 620ms cubic-bezier(0.1, 0.8, 0.3, 1) 380ms; }
+
+#loot-stage {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 0 16px;
+  text-align: center;
+}
+
+#loot-title {
+  font-family: var(--font-pixel);
+  font-size: clamp(0.9rem, 5vw, 1.4rem);
+  color: var(--gold);
+  text-shadow: 0 0 16px #ff9d00, 0 4px 0 #7a4a08;
+  opacity: 0;
+}
+#loot.pop #loot-title { animation: loot-title-in 600ms cubic-bezier(0.2, 1.4, 0.4, 1) 420ms forwards; }
+
+#loot-jar {
+  width: clamp(120px, 42vw, 190px);
+  aspect-ratio: 72 / 84;
+  background-image: url("../assets/familiars/familiars.png");
+  background-repeat: no-repeat;
+  background-size: 700% 400%;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  filter: drop-shadow(0 0 22px rgba(255, 212, 94, 0.85));
+  animation: loot-jar-drop 520ms cubic-bezier(0.2, 1.5, 0.4, 1);
+}
+#loot.pop #loot-jar { animation: loot-jar-drop 520ms cubic-bezier(0.2, 1.5, 0.4, 1), loot-jar-shake 90ms linear 5 520ms; }
+
+#loot-name {
+  font-family: var(--font-pixel);
+  font-size: clamp(0.8rem, 4.4vw, 1.15rem);
+  color: #fff;
+  text-shadow: 0 2px 6px #000;
+  opacity: 0;
+}
+#loot.pop #loot-name { animation: loot-title-in 600ms cubic-bezier(0.2, 1.4, 0.4, 1) 640ms forwards; }
+
+#loot-hint {
+  font-size: 0.75rem;
+  color: var(--ink-dim);
+  opacity: 0;
+}
+#loot.pop #loot-hint { animation: loot-hint-in 500ms ease-out 1100ms forwards; }
+
+#loot .spark {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--c, #ffd45e);
+  left: 50%;
+  top: 50%;
+  pointer-events: none;
+  animation: loot-spark var(--dur, 900ms) cubic-bezier(0.1, 0.7, 0.3, 1) forwards;
+}
+
+@keyframes loot-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes loot-rays-spin { to { transform: rotate(360deg); } }
+@keyframes loot-rays-in { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: scale(1); } }
+@keyframes loot-ring {
+  0% { opacity: 1; transform: scale(0.3); border-width: 8px; }
+  100% { opacity: 0; transform: scale(14); border-width: 1px; }
+}
+@keyframes loot-jar-drop {
+  0% { opacity: 0; transform: translateY(-90px) scale(0.3) rotate(-18deg); }
+  60% { opacity: 1; transform: translateY(8px) scale(1.12) rotate(4deg); }
+  100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+}
+@keyframes loot-jar-shake {
+  0%, 100% { margin-left: 0; }
+  25% { margin-left: -5px; }
+  75% { margin-left: 5px; }
+}
+@keyframes loot-title-in {
+  0% { opacity: 0; transform: scale(0.4) translateY(14px); }
+  70% { opacity: 1; transform: scale(1.14); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes loot-hint-in { from { opacity: 0; } to { opacity: 0.9; } }
+@keyframes loot-spark {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% {
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.2);
+    opacity: 0;
+  }
+}
+
+/* A reward waiting to be fetched keeps catching the eye until it is. */
+.daily-card.claimable { animation: daily-beckon 1.6s ease-in-out infinite; }
+@keyframes daily-beckon {
+  0%, 100% { box-shadow: 0 0 0 rgba(255, 212, 94, 0.25); }
+  50% { box-shadow: 0 0 18px rgba(255, 212, 94, 0.75); }
+}
+
+/* The daily card nudges when its goal is met. */
+.daily-card.just-done { animation: daily-pulse 700ms ease-out; }
+@keyframes daily-pulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 rgba(74, 222, 128, 0); }
+  30% { transform: scale(1.03); box-shadow: 0 0 20px rgba(74, 222, 128, 0.7); }
+  100% { transform: scale(1); box-shadow: 0 0 0 rgba(74, 222, 128, 0); }
+}
+
 /* ---------------- accessibility ---------------- */
 @media (prefers-reduced-motion: reduce) {
   #arena.shake-1, #arena.shake-2, #arena.shake-3 { animation: none; }
@@ -298,6 +449,9 @@
     animation: rating-pop 700ms ease-out forwards;
   }
   .slash { animation-duration: 200ms; }
+  #loot-rays { animation: loot-rays-in 300ms ease-out; }
+  #loot.pop #loot-jar { animation: loot-jar-drop 300ms ease-out; }
+  #loot .spark { display: none; }
   #timer-bar.low { animation: none; }
   .question-card.focused { animation: none; box-shadow: 0 0 10px rgba(255, 212, 94, 0.5); }
 }

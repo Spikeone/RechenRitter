@@ -46,6 +46,12 @@ dependencies, no framework. It is a static site, so GitHub Pages serves it as is
 - **Adaptive questions** — a fact answered wrong or slowly becomes up to three times
   as likely to come back, and a fact just missed returns within the next few
   questions. Unknown facts stay neutral, so the game never feels like drilling.
+- **Tagesaufgabe** — one goal a day, picked from a pool of twelve by the date, so
+  it is the same goal however often the page is reloaded. Progress shows on the
+  start screen. Finishing it does not interrupt the fight: it only says so with a
+  small notice, and the card in the menu turns into a glowing *Belohnung abholen!*
+  button. Handing it in plays the reveal and adds one **Gefährte** to the
+  collection, once per day.
 - **Pause** hides the formula and deals a new one on resume, so it cannot be used to
   think for free. The run is saved continuously — closing the tab and coming back
   offers *Weiter spielen*.
@@ -68,6 +74,11 @@ dependencies, no framework. It is a static site, so GitHub Pages serves it as is
   red = needs practice, tap a cell for its details) and a 30-day play-time strip.
   Useful for a parent checking how much it actually gets used.
 - **Erfolge** — 32 achievements. Nine of them unlock a new character.
+- **Sammlung** — Saison 1, *Die Glasgefährten*: 28 creatures in jars, one a day
+  from the daily quest. A creature already found shows its jar and its name; one
+  still missing shows only a black jar and `???`. Every jar in the pack has the
+  same outline and the artwork has no partial transparency, so the silhouette is
+  simply the artwork painted black and gives nothing away.
 - **Einstellungen** — sound and music volume, mute, timer bar on/off, missing
   factor on/off, character selection, a two-tap reset for the saved run, and a
   code-protected reset for the statistics, which also clears the achievements and
@@ -97,8 +108,14 @@ node tests/game.test.mjs
 node tests/stats.test.mjs
 ```
 
+```bash
+node tests/daily.test.mjs
+```
+
 Append `#debug` to the URL to get `window.rr` in the console: `rr.state`,
-`rr.level = 15`, `rr.newGame()`, `rr.unlockAll()`, `rr.resetAll()`.
+`rr.level = 15`, `rr.newGame()`, `rr.unlockAll()`, `rr.resetAll()`. For the daily:
+`rr.finishDaily()` fills today's goal so it can be handed in, `rr.claimDaily()`
+opens the reveal straight away, and `rr.lockFamiliars()` empties the collection.
 
 ### Layout of the code
 
@@ -109,6 +126,7 @@ Append `#debug` to the URL to get `window.rr` in the console: `rr.state`,
 | `js/picker.js` | which fact to ask next (adaptive bias, re-ask queue) |
 | `js/biomes.js` | region rotation: backgrounds, enemy pools, bosses |
 | `js/stats.js`, `js/achievements.js` | pure accumulation and unlock rules |
+| `js/daily.js`, `js/familiars.js` | the daily goal and the Season 1 collection |
 | `js/ui.js`, `js/fx.js`, `js/sprites.js` | all DOM, effects and sprite rendering |
 | `js/main.js` | the clock, event dispatch, saving |
 | `js/audio.js`, `js/music.js` | synthesized effects and a chiptune loop |
@@ -125,9 +143,12 @@ the game needs into `assets/`:
 python tools/build-assets.py
 ```
 
-It copies the three 32×32 tile sheets, downscales the biome backgrounds from
-1344×768 PNG to 672×384 WebP (37 MB of source becomes about 1 MB of assets) and
-renders the PWA icons. It needs Pillow. The built files under `assets/` and
+It copies the three 32×32 tile sheets, cuts the 28 jars out of the familiars
+artwork into one even sheet, downscales the biome backgrounds from 1344×768 PNG
+to 672×384 WebP (37 MB of source becomes about 1 MB of assets) and renders the
+PWA icons. It needs Pillow. The familiars pack ships as a preview image on an
+uneven grid — the last column is missing its spacer and the last row sits five
+pixels high — so the measured corners live at the top of the script. The built files under `assets/` and
 `icons/` are committed, so a clean checkout runs without the raw packs.
 
 `tools/sheet-viewer.html` shows a tile sheet with a coordinate grid — open it when
@@ -153,6 +174,7 @@ game still runs — sprites fall back to coloured blocks.
   projects or machine learning projects" — worth a read before publishing, since
   this code was written with an AI assistant.
 - Backgrounds: **Rifts of the Nine Realms Biomes** by Ronin Lab Studio (itch.io).
+- The collection: **Jar Familiars** by blaukeks (itch.io).
 - Font: **Press Start 2P** by CodeMan38, via Google Fonts (SIL Open Font License).
 - Sound effects and music are synthesized at runtime with the Web Audio API — no
   audio files.

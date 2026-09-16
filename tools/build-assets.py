@@ -25,6 +25,16 @@ ICONS_OUT = ROOT / 'icons'
 
 ROGUES_ZIP = RAW / '32rogues-0.5.0.zip'
 BIOMES_ZIP = RAW / 'Rifts of the Nine Realms Biomes.zip'
+FAMILIARS_PNG = RAW / 'JarFamilars.png'
+
+# The pack ships as a preview image rather than a sheet: the jars sit on an
+# uneven grid (the last column is missing its spacer, the last row sits 5px
+# high). These are the measured top-left corners; the cells themselves are all
+# the same size, and every jar has an identical silhouette, which is what lets a
+# locked one be drawn as a plain black shape.
+FAMILIAR_XS = [14, 99, 184, 269, 354, 439, 512]
+FAMILIAR_YS = [12, 106, 200, 289]
+FAMILIAR_W, FAMILIAR_H = 72, 84
 
 SHEETS = ['rogues.png', 'monsters.png', 'animals.png']
 
@@ -122,6 +132,27 @@ def build_backgrounds():
     print('  backgrounds total: %.1f KB' % (total / 1024))
 
 
+def build_familiars():
+    if not FAMILIARS_PNG.exists():
+        print('  skipped: no %s' % FAMILIARS_PNG.name)
+        return
+    out_dir = ROOT / 'assets' / 'familiars'
+    out_dir.mkdir(parents=True, exist_ok=True)
+    src = Image.open(FAMILIARS_PNG).convert('RGBA')
+    cols, rows = len(FAMILIAR_XS), len(FAMILIAR_YS)
+    sheet = Image.new('RGBA', (cols * FAMILIAR_W, rows * FAMILIAR_H), (0, 0, 0, 0))
+    for r, y in enumerate(FAMILIAR_YS):
+        for c, x in enumerate(FAMILIAR_XS):
+            cell = src.crop((x, y, x + FAMILIAR_W, y + FAMILIAR_H))
+            sheet.paste(cell, (c * FAMILIAR_W, r * FAMILIAR_H))
+    out = out_dir / 'familiars.png'
+    sheet.save(out, 'PNG', optimize=True)
+    print('  familiars/familiars.png  %dx%d  %.1f KB  (%d x %d jars of %dx%d)'
+          % (sheet.width, sheet.height, out.stat().st_size / 1024,
+             cols, rows, FAMILIAR_W, FAMILIAR_H))
+    return cols * rows
+
+
 def build_icons():
     ICONS_OUT.mkdir(parents=True, exist_ok=True)
     sheet = Image.open(SPRITES_OUT / 'rogues.png').convert('RGBA')
@@ -149,6 +180,8 @@ def build_icons():
 if __name__ == '__main__':
     print('32rogues sheets ->')
     build_sheets()
+    print('jar familiars ->')
+    build_familiars()
     print('biome backgrounds ->')
     build_backgrounds()
     print('icons ->')

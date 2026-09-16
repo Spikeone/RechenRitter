@@ -46,12 +46,30 @@ export function resetStats() {
   return fresh;
 }
 
+// The collection is part of the record, so it goes with the statistics.
+export function resetFamiliars() {
+  set('familiars', {});
+  remove('daily');
+  return {};
+}
+
 // ----- achievements: { id: ISO timestamp } -----
 export function loadAchievements() {
   const raw = get('achievements', {});
   return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
 }
 export const saveAchievements = (a) => set('achievements', a);
+
+// ----- the daily quest (one day's goal and progress) -----
+export const loadDailyRaw = () => get('daily', null);
+export const saveDaily = (d) => set('daily', d);
+
+// ----- the familiar collection: { id: ISO timestamp } -----
+export function loadFamiliars() {
+  const raw = get('familiars', {});
+  return raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+}
+export const saveFamiliars = (f) => set('familiars', f);
 
 // ----- settings -----
 const DEFAULT_SETTINGS = {
@@ -78,5 +96,7 @@ export function loadSettings() {
 export const saveSettings = (s) => set('settings', s);
 
 export function resetAll() {
-  for (const key of ['run', 'stats', 'achievements', 'settings']) remove(key);
+  for (const key of ['run', 'stats', 'achievements', 'settings', 'daily', 'familiars']) {
+    remove(key);
+  }
 }

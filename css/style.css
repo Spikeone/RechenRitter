@@ -475,21 +475,28 @@ button {
 .pad.locked { opacity: 0.45; pointer-events: none; }
 
 /* ---------------- overlays ---------------- */
+/* Every overlay scrolls when its card is taller than the screen, and centres it
+   when it is not. The centring is done with `margin: auto` on the card rather
+   than `align-items: center`, because a centred flex item taller than its
+   container gets its top cut off with no way to reach it. */
 .overlay {
   position: absolute;
   inset: 0;
   background: rgba(12, 10, 22, 0.93);
   display: flex;
-  align-items: center;
   justify-content: center;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
   padding: calc(env(safe-area-inset-top, 0px) + 10px) 12px
            calc(env(safe-area-inset-bottom, 0px) + 10px);
   z-index: 20;
 }
 
-.overlay.scroll { align-items: flex-start; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.overlay > .card { margin: auto; }
 
 .card {
+  flex: 0 0 auto;
   background: var(--bg-soft);
   border: 2px solid var(--line);
   border-radius: 18px;
@@ -533,7 +540,8 @@ h3 {
 .hint { color: var(--ink-dim); font-size: 0.8rem; }
 .hint.small { font-size: 0.7rem; }
 .credits { line-height: 1.6; margin-top: 8px; }
-.version-line { color: #5c5580; letter-spacing: 0.04em; }
+#start-footer { display: flex; justify-content: center; gap: 0.5em; flex-wrap: wrap; }
+#start-version { color: #5c5580; letter-spacing: 0.04em; }
 
 #start-hero { min-height: 104px; display: flex; align-items: flex-end; justify-content: center; }
 #start-hero .sprite { --sprite-scale: 3; }

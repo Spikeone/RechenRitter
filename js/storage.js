@@ -78,7 +78,9 @@ const DEFAULT_SETTINGS = {
   music: 0.35,
   skin: DEFAULT_SKIN,
   showTimerBar: true,
-  missingFactor: true,
+  // Off by default: "3 · ? = 30" is really a division, which is a step beyond
+  // the times tables this is for. It can be switched on in the settings.
+  missingFactor: false,
 };
 
 export function loadSettings() {

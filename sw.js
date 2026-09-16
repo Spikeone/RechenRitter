@@ -1,7 +1,7 @@
 // Precache-everything service worker.
 // Release ritual: bump CACHE, commit, push. Without the bump, browsers keep
 // serving the previous version from this cache.
-const CACHE = 'rechenritter-v11';
+const CACHE = 'rechenritter-v12';
 const FONT_CACHE = 'rechenritter-fonts-v1';
 
 // Kept in sync by hand with js/biomes.js — tools/build-assets.py writes these.

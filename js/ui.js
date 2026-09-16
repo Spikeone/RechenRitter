@@ -421,6 +421,7 @@ export function createUi(callbacks) {
       : '';
     $('start-version').textContent = label('version', { v: APP_VERSION })
       + ' · ' + SEASON.name;
+    $('start-footer').classList.toggle('one-line', statsData.bestLevel <= 1);
   }
 
   function showGameOver(state, statsData, isRecord) {
@@ -717,6 +718,9 @@ export function createUi(callbacks) {
 
   function renderSettings(settings, unlockedSkinIds) {
     closeStatsLock();
+    // Rendered from the one string in config.js, so adding a pack cannot leave
+    // a stale copy sitting in the markup.
+    $('credits-line').textContent = LABELS.credits;
     $('set-muted').checked = !!settings.muted;
     $('set-sfx').value = settings.sfx;
     $('set-music').value = settings.music;

@@ -11,8 +11,8 @@ dependencies, no framework. It is a static site, so GitHub Pages serves it as is
 
 - **Format** — always `x · y = z` with exactly one number missing. Up to level 9
   only the result is missing; from level 10 the first or second factor can be
-  missing too, which can be switched off in the settings (`3 · ? = 30` is really
-  a division). From level 5, some cards are **Richtig oder Falsch**: a complete
+  missing too, which is off by default and can be switched on in the settings
+  (`3 · ? = 30` is really a division, a step past the times tables). From level 5, some cards are **Richtig oder Falsch**: a complete
   statement to accept or reject with one tap.
 - **Answering** — an on-screen numpad. The answer submits itself once it is
   complete; the field never shows how many digits the result has. `OK` commits a
@@ -87,7 +87,7 @@ dependencies, no framework. It is a static site, so GitHub Pages serves it as is
   same outline and the artwork has no partial transparency, so the silhouette is
   simply the artwork painted black and gives nothing away.
 - **Einstellungen** — sound and music volume, mute, timer bar on/off, missing
-  factor on/off, character selection, a two-tap reset for the saved run, and a
+  factor on/off (off by default), character selection, a two-tap reset for the saved run, and a
   code-protected reset for the statistics, which also clears the achievements and
   puts the chosen figure back to the starting knight. The code is `STATS_RESET_CODE` in
   `js/config.js`. It is a child lock, not security: it stops an impulsive tap

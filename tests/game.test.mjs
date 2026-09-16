@@ -1,5 +1,6 @@
 // Run with:  node tests/game.test.mjs
 import assert from 'assert';
+import { readFileSync } from 'fs';
 import * as cfg from '../js/config.js';
 import { createGame } from '../js/game.js';
 import { biomeFor, backgroundFor, isBiomeStart, enemyKindsFor, allBackgrounds, BIOMES, BIOME_LENGTH, TOUR_LENGTH } from '../js/biomes.js';
@@ -62,6 +63,17 @@ test('the timer reaches its floor exactly where the fixed tour ends', () => {
     'the shortest timer starts with the first randomly ordered region');
   assert.strictEqual(cfg.TIMER_FLAT_UNTIL_LEVEL, BIOME_LENGTH,
     'the full minute covers exactly the first region');
+});
+
+test('the shown version matches the one the service worker caches under', () => {
+  // The version on the start screen is there to check what a phone is running,
+  // so it has to move with the cache that decides what a phone gets.
+  const sw = readFileSync(new URL('../sw.js', import.meta.url), 'utf8');
+  const cache = sw.match(/const CACHE = '([^']+)'/);
+  assert.ok(cache, 'sw.js names a cache');
+  assert.ok(/^[0-9]+$/.test(cfg.APP_VERSION), 'the version is a plain number');
+  assert.strictEqual(cache[1], 'rechenritter-v' + cfg.APP_VERSION,
+    'bump APP_VERSION in js/config.js and CACHE in sw.js together');
 });
 
 test('rating bands stay ordered and reachable at every level', () => {
@@ -700,9 +712,47 @@ test('pause hides the formulas and resume deals new ones', () => {
   const events = game.resume();
   assert.ok(events.find((e) => e.type === 'dealt'));
   assert.strictEqual(game.state.questions.length, 1);
-  assert.strictEqual(game.state.waveMs, game.state.waveMaxMs, 'full time after resuming');
-  assert.strictEqual(game.state.questions[0].thinkMs, 0, 'and a fresh think clock');
-  assert.notStrictEqual(game.state.questions[0], before);
+  assert.strictEqual(game.state.questions[0].thinkMs, 0, 'a fresh think clock');
+  assert.notStrictEqual(game.state.questions[0], before, 'and a different question');
+});
+
+test('pausing holds the clock rather than refilling it', () => {
+  const game = createGame({ rng: Math.random });
+  game.start();
+  const spent = 12000;
+  game.advance(spent);
+  const left = game.state.waveMs;
+  assert.ok(left < game.state.waveMaxMs, 'some of the wave is gone');
+
+  game.pause();
+  assert.strictEqual(game.advance(30000).length, 0, 'a paused game does not tick');
+
+  game.resume();
+  assert.strictEqual(game.state.waveMs, left,
+    'the new question carries on with the time that was left');
+  assert.ok(game.state.waveMs < game.state.waveMaxMs,
+    'so pausing cannot be used to buy a fresh clock');
+  assert.strictEqual(game.state.questions[0].thinkMs, 0, 'but the think clock is fresh');
+});
+
+test('pausing between waves or on the solution card resumes on a full clock', () => {
+  // There is no wave running in either case, so there is nothing to carry.
+  const held = createGame({ rng: constRng(0.5) });
+  held.start();
+  solve(held);
+  assert.strictEqual(held.state.phase, 'hold');
+  held.pause();
+  held.resume();
+  assert.strictEqual(held.state.waveMs, held.state.waveMaxMs);
+
+  const solved = createGame({ rng: constRng(0.5) });
+  solved.start();
+  solved.advance(9000);
+  fail(solved);
+  assert.strictEqual(solved.state.phase, 'solution');
+  solved.pause();
+  solved.resume();
+  assert.strictEqual(solved.state.waveMs, solved.state.waveMaxMs);
 });
 
 test('pause works from the solution card too', () => {

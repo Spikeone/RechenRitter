@@ -533,6 +533,7 @@ h3 {
 .hint { color: var(--ink-dim); font-size: 0.8rem; }
 .hint.small { font-size: 0.7rem; }
 .credits { line-height: 1.6; margin-top: 8px; }
+.version-line { color: #5c5580; letter-spacing: 0.04em; }
 
 #start-hero { min-height: 104px; display: flex; align-items: flex-end; justify-content: center; }
 #start-hero .sprite { --sprite-scale: 3; }

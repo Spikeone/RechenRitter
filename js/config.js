@@ -1,6 +1,11 @@
 // Every tunable of the game lives here. Numbers were chosen for a 12-year-old
 // practising the 1x1; adjust freely, the rest of the code reads them.
 
+// Shown on the start screen so it can be checked against what was deployed.
+// Bump it with CACHE in sw.js on every release; tests/game.test.mjs asserts the
+// two match, so they cannot drift apart.
+export const APP_VERSION = '11';
+
 export const LIVES = 5;
 
 // ----- regions -----
@@ -181,6 +186,7 @@ export const LABELS = {
   statsCodeCancel: 'Abbrechen',
   statsCleared: 'Statistik gelöscht.',
   confirmAgain: 'Wirklich? Nochmal tippen.',
+  version: 'Version {v}',
   credits: 'Grafiken: 32rogues (Seth Boyles) · Rifts of the Nine Realms (Ronin Lab Studio) · Jar Familiars (blaukeks)',
   // daily quest and the collection
   familiars: 'Sammlung',

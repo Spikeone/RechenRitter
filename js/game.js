@@ -55,6 +55,8 @@ export function createGame(options) {
     waveMaxMs: 0,
     holdMs: 0,
     pendingLevelUp: false,
+    // What was left on the clock when the game was paused mid-wave.
+    pausedWaveMs: null,
     streakExcellent: 0,
     streakCorrect: 0,
     solution: null,
@@ -312,6 +314,7 @@ export function createGame(options) {
     state.solution = null;
     state.holdMs = 0;
     state.pendingLevelUp = false;
+    state.pausedWaveMs = null;
     state.run = {
       correct: 0, wrong: 0, timeouts: 0,
       excellent: 0, perfect: 0, good: 0, slow: 0,
@@ -449,6 +452,9 @@ export function createGame(options) {
     // A level cleared just before the pause still counts once play resumes.
     const events = [];
     if (state.pendingLevelUp) finishLevel(events);
+    // The clock is held, not refilled. Pausing a wave that was nearly out of
+    // time and coming back to a full one would be a way to buy time.
+    state.pausedWaveMs = state.phase === 'running' ? state.waveMs : null;
     state.phase = 'paused';
     state.questions = [];
     state.solution = null;
@@ -460,7 +466,11 @@ export function createGame(options) {
   function resume() {
     if (state.phase !== 'paused') return NO_EVENTS;
     const events = [{ type: 'resumed' }];
+    const carried = state.pausedWaveMs;
+    state.pausedWaveMs = null;
+    // A fresh question, but on whatever time the old one had left.
     dealWave(events);
+    if (carried !== null) state.waveMs = Math.min(carried, state.waveMaxMs);
     return events;
   }
 
@@ -495,6 +505,7 @@ export function createGame(options) {
     state.solution = null;
     state.holdMs = 0;
     state.pendingLevelUp = false;
+    state.pausedWaveMs = null;
     state.run = Object.assign({
       correct: 0, wrong: 0, timeouts: 0,
       excellent: 0, perfect: 0, good: 0, slow: 0,
@@ -523,6 +534,7 @@ export function createGame(options) {
   // Debug helper (#debug hook) — jumps to a level with fresh enemies.
   function setLevel(level) {
     state.pendingLevelUp = false;
+    state.pausedWaveMs = null;
     state.holdMs = 0;
     state.solution = null;
     state.level = Math.max(1, Math.floor(level));

@@ -58,7 +58,9 @@ dependencies, no framework. It is a static site, so GitHub Pages serves it as is
   property of the season in `js/familiars.js`, so a later season brings its own
   along with its own creatures.
 - **Pause** hides the formula and deals a new one on resume, so it cannot be used to
-  think for free. The run is saved continuously — closing the tab and coming back
+  think for free. The clock is held rather than refilled: the new question carries
+  on with whatever time the old one had left, so pausing a nearly expired wave is
+  no way to buy a fresh minute. The run is saved continuously — closing the tab and coming back
   offers *Weiter spielen*.
 
 ## Controls
@@ -206,9 +208,13 @@ full-screen app and works offline.
 
 ### Release ritual
 
-The service worker precaches everything, so **after every change bump `CACHE` in
-`sw.js`** (`rechenritter-v9` → `-v10`) before committing. Without the bump,
-browsers that already visited keep serving the old version.
+The service worker precaches everything, so **after every change bump both
+`APP_VERSION` in `js/config.js` and `CACHE` in `sw.js` to the same next number**
+before committing. Without the bump, browsers that already visited keep serving
+the old version. `tests/game.test.mjs` fails if the two drift apart.
+
+The version also shows at the bottom of the start screen, so what a phone is
+running can be read off it and compared with what was deployed.
 
 ### How an update reaches a phone
 

@@ -1,7 +1,7 @@
 // Everything that touches the DOM. main.js hands in a bag of callbacks and then
 // only calls render functions; no game rules live here.
 
-import { LABELS, label, LIVES, LOW_TIMER_FRAC } from './config.js';
+import { LABELS, label, LIVES, LOW_TIMER_FRAC, APP_VERSION } from './config.js';
 import { biomeFor, backgroundFor } from './biomes.js';
 import { createSprite, displayName } from './sprites.js';
 import { PLAYERS, PLAYER_ORDER, DEFAULT_SKIN } from '../assets/sprites/manifest.js';
@@ -419,6 +419,8 @@ export function createUi(callbacks) {
     $('start-best').textContent = statsData.bestLevel > 1
       ? LABELS.bestLevel + ': ' + statsData.bestLevel
       : '';
+    $('start-version').textContent = label('version', { v: APP_VERSION })
+      + ' · ' + SEASON.name;
   }
 
   function showGameOver(state, statsData, isRecord) {
